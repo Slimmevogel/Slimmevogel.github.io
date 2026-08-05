@@ -1,4 +1,52 @@
-<h2 class="text-muted-foreground text-xs uppercase font-bold" style="white-space: pre-line;"> Server Ip
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Origins Reborn Water</title>
+
+<style>
+
+html, body {
+    margin: 0;
+    min-height: 100%;
+    background: #000;
+    overflow-x: hidden;
+    font-family: Arial, sans-serif;
+}
+
+#water {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+}
+
+.content {
+    position: relative;
+    z-index: 1;
+    padding: 30px;
+}
+
+h2 {
+    color: white;
+    text-shadow: 0 0 10px black;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<canvas id="water"></canvas>
+
+<div class="content">
+
+<!-- PASTE YOUR EXISTING H2 HERE WITHOUT CHANGING ANYTHING -->
+
+<h2 class="text-muted-foreground text-xs uppercase font-bold" style="white-space: pre-line;">
+Server Ip
   OriginsRebirthed.aternos.me
   
   Custom  1.21.11 Origins Server
@@ -97,4 +145,211 @@ Witch, potion-effecten duren 4x langer, leftclick geeft jezelf 20s Speed (15s co
 Wolf, bonus speed en kracht, meer HP en damage tijdens full moon, bonus als leider van een pack, roept wolves binnen 10 blocks (22,5s cooldown), bonus kracht als er andere wolves in de buurt zijn, wordt vergiftigd door niet-vlees te eten.
 
 Ancient Golem, hogere movement speed, 2x levens, extra armor, grotere hitbox, undead mobs vallen je niet aan, 2x sterkere aanvallen, grotere reach, 93,75% kans op thorns.
-  </h2>
+</h2>
+
+</div>
+
+
+<script>
+
+const canvas = document.getElementById("water");
+const ctx = canvas.getContext("2d");
+
+let width, height;
+
+function resize(){
+    width = canvas.width = innerWidth;
+    height = canvas.height = innerHeight;
+}
+
+resize();
+
+
+const cellSize = 3;
+
+let cols, rows;
+let waveA, waveB;
+
+
+function setup(){
+
+    cols = Math.ceil(width / cellSize);
+    rows = Math.ceil(height / cellSize);
+
+    waveA = Array.from(
+        {length: rows},
+        ()=>new Float32Array(cols)
+    );
+
+    waveB = Array.from(
+        {length: rows},
+        ()=>new Float32Array(cols)
+    );
+}
+
+setup();
+
+window.addEventListener("resize",()=>{
+    resize();
+    setup();
+});
+
+
+
+function splash(x,y,power){
+
+    let cx=Math.floor(x/cellSize);
+    let cy=Math.floor(y/cellSize);
+
+    let radius=20;
+
+    for(let yy=-radius;yy<=radius;yy++){
+
+        for(let xx=-radius;xx<=radius;xx++){
+
+            let px=cx+xx;
+            let py=cy+yy;
+
+            if(px>=0 && px<cols &&
+               py>=0 && py<rows){
+
+                let d=Math.sqrt(xx*xx+yy*yy);
+
+                if(d<radius){
+
+                    waveB[py][px]+=
+                    Math.cos(d/radius*Math.PI/2)
+                    *power;
+
+                }
+            }
+        }
+    }
+}
+
+
+
+let lastMouse=null;
+let lastTime=performance.now();
+
+
+canvas.addEventListener("mousemove",e=>{
+
+    let now=performance.now();
+
+    if(lastMouse){
+
+        let dx=e.clientX-lastMouse.x;
+        let dy=e.clientY-lastMouse.y;
+
+        let speed=
+        Math.sqrt(dx*dx+dy*dy) /
+        Math.max(now-lastTime,1);
+
+
+        splash(
+            e.clientX,
+            e.clientY,
+            Math.min(speed*5,35)
+        );
+    }
+
+
+    lastMouse={
+        x:e.clientX,
+        y:e.clientY
+    };
+
+    lastTime=now;
+
+});
+
+
+canvas.addEventListener("click",e=>{
+    splash(e.clientX,e.clientY,120);
+});
+
+
+
+function simulate(){
+
+    for(let y=1;y<rows-1;y++){
+
+        for(let x=1;x<cols-1;x++){
+
+            let value =
+            (
+                waveB[y-1][x]+
+                waveB[y+1][x]+
+                waveB[y][x-1]+
+                waveB[y][x+1]
+            )/2
+            -
+            waveA[y][x];
+
+
+            value*=0.978;
+
+            waveA[y][x]=value;
+        }
+    }
+
+
+    let temp=waveA;
+    waveA=waveB;
+    waveB=temp;
+}
+
+
+setInterval(simulate,1000/120);
+
+
+
+function draw(){
+
+    let img=ctx.createImageData(width,height);
+    let pixels=img.data;
+
+
+    for(let y=0;y<height;y++){
+
+        for(let x=0;x<width;x++){
+
+            let gx=Math.floor(x/cellSize);
+            let gy=Math.floor(y/cellSize);
+
+            let wave=waveA[gy]?.[gx]||0;
+
+
+            let brightness=100+wave*8;
+
+            brightness=Math.max(
+                0,
+                Math.min(255,brightness)
+            );
+
+
+            let i=(y*width+x)*4;
+
+
+            pixels[i]=brightness;
+            pixels[i+1]=brightness;
+            pixels[i+2]=brightness;
+
+            pixels[i+3]=120;
+        }
+    }
+
+
+    ctx.putImageData(img,0,0);
+
+    requestAnimationFrame(draw);
+}
+
+
+draw();
+
+</script>
+
+</body>
+</html>
