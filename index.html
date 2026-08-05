@@ -25,7 +25,7 @@ html, body {
 
 .content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     padding: 30px;
 }
 
@@ -234,7 +234,7 @@ let lastMouse=null;
 let lastTime=performance.now();
 
 
-canvas.addEventListener("mousemove",e=>{
+window.addEventListener("mousemove",e=>{
 
     let now=performance.now();
 
@@ -266,7 +266,7 @@ canvas.addEventListener("mousemove",e=>{
 });
 
 
-canvas.addEventListener("click",e=>{
+window.addEventListener("click",e=>{
     splash(e.clientX,e.clientY,120);
 });
 
