@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Water</title>
+
+<style>
+html, body{
+    margin:0;
+    overflow:hidden;
+    background:#02141f;
+}
+
+canvas{
+    display:block;
+}
+</style>
+</head>
+<body>
+
+<canvas id="water"></canvas>
+
+<script>
+
+const canvas = document.getElementById("water");
+const ctx = canvas.getContext("2d");
+
+let width,height;
+
+function resize(){
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+
+    cols = Math.floor(width/spacing)+1;
+    rows = Math.floor(height/spacing)+1;
+
+    createGrid();
+}
+
+window.addEventListener("resize",resize);
+
+const spacing = 6;
+
+let cols,rows;
+let current=[];
+let previous=[];
+
+const damping = 0.992;
+
+function createGrid(){
+
+    current=[];
+    previous=[];
+
+    for(let y=0;y<rows;y++){
+
+        current[y]=[];
+        previous[y]=[];
+
+        for(let x=0;x<cols;x++){
+
+            current[y][x]=0;
+            previous[y][x]=0;
+
+        }
+
+    }
+
+}
+
+resize();
+
+function disturb(px,py,strength,radius){
+
+    const gx=Math.floor(px/spacing);
+    const gy=Math.floor(py/spacing);
+
+    const r=Math.ceil(radius/spacing);
+
+    for(let y=-r;y<=r;y++){
+
+        for(let x=-r;x<=r;x++){
+
+            const nx=gx+x;
+            const ny=gy+y;
+
+            if(nx<1||ny<1||nx>=cols-1||ny>=rows-1) continue;
+
+            const d=Math.sqrt(x*x+y*y);
+
+            if(d<r){
+
+                previous[ny][nx]+=strength*(1-d/r);
+
+            }
+
+        }
+
+    }
+
+}
+
+// Mouse movement
+
+let lastX=0,lastY=0,lastTime=performance.now();
+
+canvas.addEventListener("mousemove",e=>{
+
+    const now=performance.now();
+
+    const dx=e.clientX-lastX;
+    const dy=e.clientY-lastY;
+
+    const dt=Math.max(1,now-lastTime);
+
+    const speed=Math.sqrt(dx*dx+dy*dy)/dt;
+
+    const strength=Math.min(120,15+speed*260);
+
+    disturb(e.clientX,e.clientY,strength,25+speed*40);
+
+    lastX=e.clientX;
+    lastY=e.clientY;
+    lastTime=now;
+
+});
+
+// Pebble
+
+canvas.addEventListener("click",e=>{
+
+    disturb(e.clientX,e.clientY,180,18);
+
+});
+
+// Simulation
+
+function simulate(){
+
+    for(let y=1;y<rows-1;y++){
+
+        for(let x=1;x<cols-1;x++){
+
+            current[y][x]=(
+                previous[y-1][x]+
+                previous[y+1][x]+
+                previous[y][x-1]+
+                previous[y][x+1]
+            )/2-current[y][x];
+
+            current[y][x]*=damping;
+
+        }
+
+    }
+
+    let temp=current;
+    current=previous;
+    previous=temp;
+
+}
+
+// Rendering
+
+function render(){
+
+    ctx.clearRect(0,0,width,height);
+
+    // Background gradient
+
+    const g=ctx.createLinearGradient(0,0,0,height);
+    g.addColorStop(0,"#0a4c7a");
+    g.addColorStop(1,"#04273d");
+
+    ctx.fillStyle=g;
+    ctx.fillRect(0,0,width,height);
+
+    ctx.beginPath();
+
+    for(let y=1;y<rows-1;y++){
+
+        for(let x=1;x<cols-1;x++){
+
+            const h=previous[y][x];
+
+            const px=x*spacing;
+            const py=y*spacing+h;
+
+            if(x===1)
+                ctx.moveTo(px,py);
+            else
+                ctx.lineTo(px,py);
+
+        }
+
+    }
+
+    ctx.strokeStyle="rgba(180,240,255,0.18)";
+    ctx.lineWidth=1;
+    ctx.stroke();
+
+    // Reflection highlights
+
+    for(let y=1;y<rows-1;y++){
+
+        for(let x=1;x<cols-1;x++){
+
+            const h=previous[y][x];
+
+            const brightness=Math.abs(h)*2;
+
+            if(brightness<1) continue;
+
+            ctx.fillStyle=`rgba(255,255,255,${Math.min(0.18,brightness/120)})`;
+
+            ctx.fillRect(
+                x*spacing,
+                y*spacing+h,
+                spacing,
+                spacing
+            );
+
+        }
+
+    }
+
+}
+
+function animate(){
+
+    simulate();
+    render();
+
+    requestAnimationFrame(animate);
+
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
