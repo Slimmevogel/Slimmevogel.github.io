@@ -11,8 +11,11 @@ html, body {
     min-height: 100%;
     background: #000;
     overflow-x: hidden;
-    font-family: Arial, sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
 }
+
+
+/* Water background */
 
 #water {
     position: fixed;
@@ -23,15 +26,89 @@ html, body {
     pointer-events: none;
 }
 
+
+/* Main content card */
+
 .content {
     position: relative;
     z-index: 2;
-    padding: 30px;
+
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 35px;
+
+    background: rgba(0,0,0,0.45);
+
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 18px;
+
+    backdrop-filter: blur(8px);
+
+    box-shadow:
+        0 0 30px rgba(0,0,0,0.8);
 }
 
+
+/* Text */
+
 h2 {
-    color: white;
-    text-shadow: 0 0 10px black;
+
+    color: #ffffff;
+
+    font-size: 15px;
+    line-height: 1.7;
+
+    font-weight: 500;
+
+    letter-spacing: 0.2px;
+
+    text-shadow:
+        0 2px 8px black;
+
+    white-space: pre-line;
+}
+
+
+/* Highlight first lines */
+
+h2::first-line {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+
+/* Scrollbar */
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.25);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.45);
+}
+
+
+/* Mobile support */
+
+@media(max-width:700px){
+
+    .content {
+        margin: 15px;
+        padding: 20px;
+    }
+
+    h2 {
+        font-size: 13px;
+    }
 }
 
 </style>
