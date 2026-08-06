@@ -44,8 +44,6 @@ h2 {
 
 <div class="content">
 
-<!-- PASTE YOUR EXISTING H2 HERE WITHOUT CHANGING ANYTHING -->
-
 <h2 class="text-muted-foreground text-xs uppercase font-bold" style="white-space: pre-line;">
 Server Ip
   OriginsRebirthed.aternos.me
@@ -154,7 +152,7 @@ Ancient Golem, hogere movement speed, 2x levens, extra armor, grotere hitbox, un
 <script>
 
 const canvas = document.getElementById("water");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", { alpha: true });
 
 let width, height;
 
@@ -166,7 +164,7 @@ function resize(){
 resize();
 
 
-const cellSize = 3;
+const cellSize = 1;
 
 let cols, rows;
 let waveA, waveB;
@@ -304,49 +302,37 @@ function simulate(){
 
 setInterval(simulate,1000/120);
 
-
-
 function draw(){
 
-    let img=ctx.createImageData(width,height);
-    let pixels=img.data;
+    ctx.clearRect(0, 0, width, height);
 
+    for(let y=0; y<rows; y++){
 
-    for(let y=0;y<height;y++){
+        for(let x=0; x<cols; x++){
 
-        for(let x=0;x<width;x++){
+            let wave = waveA[y][x];
 
-            let gx=Math.floor(x/cellSize);
-            let gy=Math.floor(y/cellSize);
+            let brightness = 100 + wave * 10;
 
-            let wave=waveA[gy]?.[gx]||0;
-
-
-            let brightness=100+wave*8;
-
-            brightness=Math.max(
+            brightness = Math.max(
                 0,
-                Math.min(255,brightness)
+                Math.min(255, brightness)
             );
 
+            ctx.fillStyle =
+            `rgba(${brightness},${brightness},${brightness},0.35)`;
 
-            let i=(y*width+x)*4;
-
-
-            pixels[i]=brightness;
-            pixels[i+1]=brightness;
-            pixels[i+2]=brightness;
-
-            pixels[i+3]=120;
+            ctx.fillRect(
+                x * cellSize,
+                y * cellSize,
+                cellSize,
+                cellSize
+            );
         }
     }
 
-
-    ctx.putImageData(img,0,0);
-
     requestAnimationFrame(draw);
 }
-
 
 draw();
 
