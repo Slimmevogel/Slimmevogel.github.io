@@ -2,6 +2,30 @@
 <html>
 <head>
 <title>letter defense</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 8px;
+    overflow: auto;
+}
+
+#game {
+    position: relative;
+    width: 1800px;
+    height: 1200px;
+    border: 1px solid black;
+    overflow: hidden;
+    margin-top: 15px;
+    background: white;
+}
+
+button {
+    font-family: inherit;
+}
+
+</style>
 </head>
 
 <body>
@@ -148,14 +172,6 @@ Start Round
 
 <div
 id="game"
-style="
-position:relative;
-width:900px;
-height:600px;
-border:1px solid black;
-overflow:hidden;
-margin-top:15px;
-"
 ></div>
 
 
@@ -242,7 +258,7 @@ roundSize:1.5
 
 
 /* =====================================================
-   MAPS
+   LARGE COMPLEX MAPS
 ===================================================== */
 
 const maps = [
@@ -251,12 +267,22 @@ const maps = [
 name:"Level 1",
 
 path:[
-{x:-20,y:300},
-{x:250,y:300},
-{x:250,y:150},
-{x:550,y:150},
-{x:550,y:400},
-{x:920,y:400}
+{x:-40,y:180},
+{x:180,y:180},
+{x:180,y:420},
+{x:480,y:420},
+{x:480,y:120},
+{x:820,y:120},
+{x:820,y:360},
+{x:1120,y:360},
+{x:1120,y:720},
+{x:850,y:720},
+{x:850,y:960},
+{x:1350,y:960},
+{x:1350,y:700},
+{x:1580,y:700},
+{x:1580,y:1050},
+{x:1840,y:1050}
 ]
 
 },
@@ -265,14 +291,22 @@ path:[
 name:"Level 2",
 
 path:[
-{x:-20,y:120},
-{x:180,y:120},
-{x:180,y:470},
-{x:430,y:470},
-{x:430,y:200},
-{x:680,y:200},
-{x:680,y:480},
-{x:920,y:480}
+{x:-40,y:900},
+{x:220,y:900},
+{x:220,y:250},
+{x:500,y:250},
+{x:500,y:700},
+{x:780,y:700},
+{x:780,y:180},
+{x:1080,y:180},
+{x:1080,y:500},
+{x:1370,y:500},
+{x:1370,y:900},
+{x:1100,y:900},
+{x:1100,y:1100},
+{x:1550,y:1100},
+{x:1550,y:700},
+{x:1840,y:700}
 ]
 
 },
@@ -281,14 +315,22 @@ path:[
 name:"Level 3",
 
 path:[
-{x:-20,y:500},
-{x:150,y:500},
-{x:150,y:100},
-{x:400,y:100},
-{x:400,y:350},
-{x:650,y:350},
-{x:650,y:100},
-{x:920,y:100}
+{x:-40,y:1050},
+{x:180,y:1050},
+{x:180,y:750},
+{x:420,y:750},
+{x:420,y:150},
+{x:700,y:150},
+{x:700,y:500},
+{x:980,y:500},
+{x:980,y:950},
+{x:1260,y:950},
+{x:1260,y:300},
+{x:1510,y:300},
+{x:1510,y:800},
+{x:1750,y:800},
+{x:1750,y:450},
+{x:1840,y:450}
 ]
 
 },
@@ -297,16 +339,24 @@ path:[
 name:"Level 4",
 
 path:[
-{x:-20,y:520},
-{x:120,y:520},
-{x:120,y:100},
-{x:300,y:100},
-{x:300,y:500},
-{x:500,y:500},
-{x:500,y:150},
-{x:720,y:150},
-{x:720,y:450},
-{x:920,y:450}
+{x:-40,y:300},
+{x:220,y:300},
+{x:220,y:1050},
+{x:500,y:1050},
+{x:500,y:800},
+{x:500,y:200},
+{x:800,y:200},
+{x:800,y:600},
+{x:1050,y:600},
+{x:1050,y:1050},
+{x:1320,y:1050},
+{x:1320,y:750},
+{x:1320,y:150},
+{x:1600,y:150},
+{x:1600,y:450},
+{x:1780,y:450},
+{x:1780,y:900},
+{x:1840,y:900}
 ]
 
 }
@@ -611,7 +661,8 @@ document.getElementById(
 
 document.getElementById(
 "currentMap"
-).textContent=maps[chosenMap].name;
+).textContent=
+maps[chosenMap].name;
 
 
 document.getElementById(
@@ -636,14 +687,15 @@ updateUI();
 
 
 /* =====================================================
-   MAP
+   MAP DRAWING
 ===================================================== */
 
 function buildMap(){
 
 game.innerHTML="";
 
-const path=maps[chosenMap].path;
+const path=
+maps[chosenMap].path;
 
 
 for(
@@ -661,7 +713,9 @@ const dx=b.x-a.x;
 const dy=b.y-a.y;
 
 
-const road=document.createElement("div");
+const road=
+document.createElement("div");
+
 
 road.style.position="absolute";
 
@@ -674,24 +728,24 @@ road.style.left=
 Math.min(a.x,b.x)+"px";
 
 road.style.top=
-a.y-20+"px";
+(a.y-28)+"px";
 
 road.style.width=
 Math.abs(dx)+"px";
 
-road.style.height="40px";
+road.style.height="56px";
 
 }
 
 else{
 
 road.style.left=
-a.x-20+"px";
+(a.x-28)+"px";
 
 road.style.top=
 Math.min(a.y,b.y)+"px";
 
-road.style.width="40px";
+road.style.width="56px";
 
 road.style.height=
 Math.abs(dy)+"px";
@@ -701,17 +755,24 @@ Math.abs(dy)+"px";
 
 road.style.background="#eee";
 
-road.style.border="1px solid #ccc";
+road.style.border=
+"1px solid #ccc";
 
-road.style.boxSizing="border-box";
+road.style.boxSizing=
+"border-box";
 
-road.style.pointerEvents="none";
+road.style.pointerEvents=
+"none";
+
+road.style.zIndex="1";
 
 
 game.appendChild(road);
 
 }
 
+
+/* Start */
 
 const start=
 document.createElement("span");
@@ -723,12 +784,16 @@ start.style.position="absolute";
 start.style.left="5px";
 
 start.style.top=
-path[0].y-35+"px";
+(path[0].y-45)+"px";
 
 start.style.pointerEvents="none";
 
+start.style.zIndex="2";
+
 game.appendChild(start);
 
+
+/* End */
 
 const end=
 document.createElement("span");
@@ -737,12 +802,15 @@ end.textContent="end";
 
 end.style.position="absolute";
 
-end.style.left="850px";
+end.style.left=
+(path[path.length-1].x-20)+"px";
 
 end.style.top=
-path[path.length-1].y-35+"px";
+(path[path.length-1].y-45)+"px";
 
 end.style.pointerEvents="none";
+
+end.style.zIndex="2";
 
 game.appendChild(end);
 
@@ -757,26 +825,23 @@ function showRange(tower,x,y){
 
 let range;
 
+
 if(tower){
 
-range=getStats(tower).range;
+range=
+getStats(tower).range;
 
 }
 
 else{
 
-range=towerTypes[selectedType].range;
+range=
+towerTypes[selectedType].range;
 
 }
 
 
-/*
-   Farms have no attack range.
-*/
-
-if(
-range<=0
-){
+if(range<=0){
 
 hideRange();
 
@@ -786,7 +851,9 @@ return;
 
 
 let circle=
-document.getElementById("rangeCircle");
+document.getElementById(
+"rangeCircle"
+);
 
 
 if(!circle){
@@ -794,19 +861,26 @@ if(!circle){
 circle=
 document.createElement("div");
 
-circle.id="rangeCircle";
+circle.id=
+"rangeCircle";
 
-circle.style.position="absolute";
+circle.style.position=
+"absolute";
 
-circle.style.border="1px solid black";
+circle.style.border=
+"1px solid black";
 
-circle.style.borderRadius="50%";
+circle.style.borderRadius=
+"50%";
 
-circle.style.background="rgba(0,0,0,0.05)";
+circle.style.background=
+"rgba(0,0,0,0.05)";
 
-circle.style.pointerEvents="none";
+circle.style.pointerEvents=
+"none";
 
-circle.style.boxSizing="border-box";
+circle.style.boxSizing=
+"border-box";
 
 circle.style.zIndex="5";
 
@@ -827,7 +901,8 @@ circle.style.left=
 circle.style.top=
 (y-range)+"px";
 
-circle.style.display="block";
+circle.style.display=
+"block";
 
 }
 
@@ -841,7 +916,8 @@ document.getElementById(
 
 if(circle){
 
-circle.style.display="none";
+circle.style.display=
+"none";
 
 }
 
@@ -883,6 +959,7 @@ if(paused){
 hideRange();
 
 }
+
 else if(selectedTower){
 
 showRange(
@@ -909,12 +986,14 @@ hideRange();
 
 document.getElementById(
 "gameScreen"
-).style.display="none";
+).style.display=
+"none";
 
 
 document.getElementById(
 "menu"
-).style.display="block";
+).style.display=
+"block";
 
 }
 
@@ -932,15 +1011,18 @@ Math.floor(money);
 
 document.getElementById(
 "lives"
-).textContent=lives;
+).textContent=
+lives;
 
 document.getElementById(
 "round"
-).textContent=round;
+).textContent=
+round;
 
 document.getElementById(
 "score"
-).textContent=score;
+).textContent=
+score;
 
 
 updateTowerCounts();
@@ -1007,14 +1089,6 @@ towerTypes[type].name;
 
 showNoTowerSelected();
 
-hideRange();
-
-
-/*
-   When selecting a tower type,
-   show its range while moving
-   around the map.
-*/
 
 if(
 towerTypes[type].range>0
@@ -1025,6 +1099,12 @@ null,
 450,
 300
 );
+
+}
+
+else{
+
+hideRange();
 
 }
 
@@ -1079,9 +1159,11 @@ dy*dy
 );
 
 
-const x=ax+t*dx;
+const x=
+ax+t*dx;
 
-const y=ay+t*dy;
+const y=
+ay+t*dy;
 
 
 return Math.hypot(
@@ -1101,7 +1183,7 @@ function onRoad(x,y){
 const path=
 maps[chosenMap].path;
 
-const roadWidth=55;
+const roadWidth=70;
 
 
 for(
@@ -1157,16 +1239,14 @@ return false;
 
 
 /* =====================================================
-   GAME MOUSE MOVE
+   MOUSE MOVEMENT
 ===================================================== */
 
 game.addEventListener(
 "mousemove",
 function(event){
 
-if(
-paused
-){
+if(paused){
 
 return;
 
@@ -1178,20 +1258,15 @@ game.getBoundingClientRect();
 
 
 const x=
-event.clientX-rect.left;
+event.clientX-
+rect.left;
 
 const y=
-event.clientY-rect.top;
+event.clientY-
+rect.top;
 
 
-/*
-   If an existing tower is selected,
-   keep its circle on it.
-*/
-
-if(
-selectedTower
-){
+if(selectedTower){
 
 showRange(
 selectedTower,
@@ -1203,11 +1278,6 @@ return;
 
 }
 
-
-/*
-   Otherwise show the selected tower's
-   range at the mouse cursor.
-*/
 
 if(
 towerTypes[selectedType].range>0
@@ -1225,25 +1295,21 @@ y
 
 
 /* =====================================================
-   CLICK
+   GAME CLICK
 ===================================================== */
 
 game.addEventListener(
 "click",
 function(event){
 
-if(
-paused
-){
+if(paused){
 
 return;
 
 }
 
 
-/*
-   Existing tower selected.
-*/
+/* Select existing tower */
 
 if(
 event.target.classList.contains("tower")
@@ -1279,25 +1345,24 @@ tower.y
 
 }
 
-
 return;
 
 }
 
 
-/*
-   Build location.
-*/
+/* Build */
 
 const rect=
 game.getBoundingClientRect();
 
 
 const x=
-event.clientX-rect.left;
+event.clientX-
+rect.left;
 
 const y=
-event.clientY-rect.top;
+event.clientY-
+rect.top;
 
 
 const data=
@@ -1365,22 +1430,29 @@ document.createElement("span");
 
 element.className="tower";
 
-element.textContent=data.name;
+element.textContent=
+data.name;
 
-element.style.position="absolute";
+element.style.position=
+"absolute";
 
-element.style.left=x+"px";
+element.style.left=
+x+"px";
 
-element.style.top=y+"px";
+element.style.top=
+y+"px";
 
 element.style.transform=
 "translate(-50%,-50%)";
 
-element.style.fontWeight="bold";
+element.style.fontWeight=
+"bold";
 
-element.style.cursor="pointer";
+element.style.cursor=
+"pointer";
 
-element.style.whiteSpace="nowrap";
+element.style.whiteSpace=
+"nowrap";
 
 element.style.zIndex="10";
 
@@ -1460,7 +1532,7 @@ return costs[level]||null;
 
 
 /* =====================================================
-   STATS
+   TOWER STATS
 ===================================================== */
 
 function getStats(tower){
@@ -1575,17 +1647,19 @@ pierce
 
 
 /* =====================================================
-   FARM
+   FARM STATS
 ===================================================== */
 
 function farmIncome(tower){
 
 let income=
-15+tower.path1*10;
+15+
+tower.path1*10;
 
 
 let interval=
-5-tower.path2*.7;
+5-
+tower.path2*.7;
 
 
 interval=
@@ -1606,7 +1680,7 @@ interval
 
 
 /* =====================================================
-   TOWER INFO
+   TOWER INFORMATION
 ===================================================== */
 
 function showNoTowerSelected(){
@@ -1621,9 +1695,7 @@ document.getElementById(
 
 function showTowerInfo(){
 
-if(
-!selectedTower
-){
+if(!selectedTower){
 
 showNoTowerSelected();
 
@@ -1632,7 +1704,8 @@ return;
 }
 
 
-const tower=selectedTower;
+const tower=
+selectedTower;
 
 const data=
 towerTypes[tower.type];
@@ -1742,6 +1815,7 @@ cost2+
 
 html+=
 "<br><br>"+
+
 "<button onclick=\"sellSelectedTower()\">"+
 "Sell Tower"+
 "</button>";
@@ -1749,7 +1823,8 @@ html+=
 
 document.getElementById(
 "upgrades"
-).innerHTML=html;
+).innerHTML=
+html;
 
 }
 
@@ -1760,16 +1835,15 @@ document.getElementById(
 
 function upgradePath(path){
 
-if(
-!selectedTower
-){
+if(!selectedTower){
 
 return;
 
 }
 
 
-const tower=selectedTower;
+const tower=
+selectedTower;
 
 
 const level=
@@ -1780,9 +1854,7 @@ tower.path1
 tower.path2;
 
 
-if(
-level>=5
-){
+if(level>=5){
 
 return;
 
@@ -1793,9 +1865,7 @@ const cost=
 upgradeCost(level);
 
 
-if(
-money<cost
-){
+if(money<cost){
 
 return;
 
@@ -1807,9 +1877,7 @@ money-=cost;
 tower.spent+=cost;
 
 
-if(
-path===1
-){
+if(path===1){
 
 tower.path1++;
 
@@ -1826,11 +1894,6 @@ updateTowerText(tower);
 
 showTowerInfo();
 
-
-/*
-   Update range immediately after
-   upgrading.
-*/
 
 showRange(
 tower,
@@ -1850,16 +1913,15 @@ updateUI();
 
 function sellSelectedTower(){
 
-if(
-!selectedTower
-){
+if(!selectedTower){
 
 return;
 
 }
 
 
-const tower=selectedTower;
+const tower=
+selectedTower;
 
 
 const refund=
@@ -1881,9 +1943,7 @@ const index=
 towers.indexOf(tower);
 
 
-if(
-index!==-1
-){
+if(index!==-1){
 
 towers.splice(
 index,
@@ -1898,7 +1958,8 @@ selectedTower=null;
 
 document.getElementById(
 "selected"
-).textContent="None";
+).textContent=
+"None";
 
 
 showNoTowerSelected();
@@ -1971,7 +2032,7 @@ return total;
 
 
 /* =====================================================
-   GET POSITION ON PATH
+   POSITION ON PATH
 ===================================================== */
 
 function getPath(distance){
@@ -1980,19 +2041,21 @@ const path=
 maps[chosenMap].path;
 
 
-if(
-distance<=0
-){
+if(distance<=0){
 
 return{
+
 x:path[0].x,
+
 y:path[0].y
+
 };
 
 }
 
 
-let remaining=distance;
+let remaining=
+distance;
 
 
 for(
@@ -2001,14 +2064,18 @@ i<path.length-1;
 i++
 ){
 
-const a=path[i];
+const a=
+path[i];
 
-const b=path[i+1];
+const b=
+path[i+1];
 
 
-const dx=b.x-a.x;
+const dx=
+b.x-a.x;
 
-const dy=b.y-a.y;
+const dy=
+b.y-a.y;
 
 
 const length=
@@ -2028,9 +2095,11 @@ remaining/length;
 
 return{
 
-x:a.x+dx*ratio,
+x:a.x+
+dx*ratio,
 
-y:a.y+dy*ratio
+y:a.y+
+dy*ratio
 
 };
 
@@ -2065,7 +2134,8 @@ function spawnEnemy(){
 
 let type;
 
-const r=Math.random();
+const r=
+Math.random();
 
 
 if(
@@ -2073,7 +2143,8 @@ round>=12 &&
 Math.random()<.06
 ){
 
-type=enemyTypes[5];
+type=
+enemyTypes[5];
 
 }
 
@@ -2082,7 +2153,8 @@ round>=6 &&
 r<.20
 ){
 
-type=enemyTypes[4];
+type=
+enemyTypes[4];
 
 }
 
@@ -2090,7 +2162,8 @@ else if(
 r<.40
 ){
 
-type=enemyTypes[3];
+type=
+enemyTypes[3];
 
 }
 
@@ -2098,7 +2171,8 @@ else if(
 r<.65
 ){
 
-type=enemyTypes[2];
+type=
+enemyTypes[2];
 
 }
 
@@ -2106,13 +2180,15 @@ else if(
 r<.85
 ){
 
-type=enemyTypes[1];
+type=
+enemyTypes[1];
 
 }
 
 else{
 
-type=enemyTypes[0];
+type=
+enemyTypes[0];
 
 }
 
@@ -2126,14 +2202,16 @@ type.hp*
 difficulty.enemyHealth;
 
 
-hp+=round*6;
+hp+=
+round*6;
 
 
 if(
 type.name==="boss"
 ){
 
-hp+=round*40;
+hp+=
+round*40;
 
 }
 
@@ -2145,18 +2223,23 @@ document.createElement("span");
 element.textContent=
 type.name;
 
-element.style.position="absolute";
+element.style.position=
+"absolute";
 
-element.style.color="red";
+element.style.color=
+"red";
 
-element.style.fontWeight="bold";
+element.style.fontWeight=
+"bold";
 
 element.style.transform=
 "translate(-50%,-50%)";
 
-element.style.whiteSpace="nowrap";
+element.style.whiteSpace=
+"nowrap";
 
-element.style.pointerEvents="none";
+element.style.pointerEvents=
+"none";
 
 element.style.zIndex="20";
 
@@ -2165,7 +2248,8 @@ if(
 type.name==="boss"
 ){
 
-element.style.fontSize="20px";
+element.style.fontSize=
+"20px";
 
 }
 
@@ -2249,9 +2333,7 @@ spawnTimer=0;
 
 function roundUpdate(dt){
 
-if(
-!roundRunning
-){
+if(!roundRunning){
 
 nextRoundTimer-=dt;
 
@@ -2326,13 +2408,16 @@ for(
 let tower of towers
 ){
 
-/*
-   FARM
-*/
+/* FARM */
 
 if(
 tower.type==="Farm"
 ){
+
+/*
+   Farms ONLY generate money while
+   an actual round is active.
+*/
 
 if(
 !roundRunning ||
@@ -2370,9 +2455,7 @@ continue;
 }
 
 
-/*
-   NORMAL TOWER
-*/
+/* NORMAL TOWERS */
 
 const stats=
 getStats(tower);
@@ -2400,7 +2483,9 @@ let enemy of enemies
 ){
 
 const p=
-getPath(enemy.distance);
+getPath(
+enemy.distance
+);
 
 
 const distance=
@@ -2427,9 +2512,7 @@ best=enemy.distance;
 }
 
 
-if(
-target
-){
+if(target){
 
 fire(
 tower,
@@ -2460,17 +2543,23 @@ const element=
 document.createElement("span");
 
 
-element.textContent="bullet";
+element.textContent=
+"bullet";
 
-element.style.position="absolute";
+element.style.position=
+"absolute";
 
-element.style.fontSize="10px";
+element.style.fontSize=
+"10px";
 
-element.style.fontWeight="bold";
+element.style.fontWeight=
+"bold";
 
-element.style.pointerEvents="none";
+element.style.pointerEvents=
+"none";
 
-element.style.zIndex="30";
+element.style.zIndex=
+"30";
 
 
 game.appendChild(element);
@@ -2505,7 +2594,7 @@ element:element
 
 
 /* =====================================================
-   BULLETS
+   BULLET UPDATE
 ===================================================== */
 
 function bulletUpdate(dt){
@@ -2544,9 +2633,11 @@ bullet.target.distance
 );
 
 
-const dx=p.x-bullet.x;
+const dx=
+p.x-bullet.x;
 
-const dy=p.y-bullet.y;
+const dy=
+p.y-bullet.y;
 
 
 const distance=
@@ -2627,9 +2718,7 @@ bullet.slow
 }
 
 
-/*
-   Cannon splash.
-*/
+/* Cannon splash */
 
 if(
 bullet.splash>0
@@ -2679,9 +2768,7 @@ bullet.damage*.45;
 }
 
 
-/*
-   Wizard pierce.
-*/
+/* Wizard pierce */
 
 if(
 bullet.pierce>1
@@ -2799,7 +2886,7 @@ updateUI();
 
 
 /* =====================================================
-   ENEMIES
+   ENEMY UPDATE
 ===================================================== */
 
 function enemyUpdate(dt){
@@ -2943,12 +3030,14 @@ hideRange();
 
 document.getElementById(
 "finalScore"
-).textContent=score;
+).textContent=
+score;
 
 
 document.getElementById(
 "gameOver"
-).style.display="block";
+).style.display=
+"block";
 
 }
 
@@ -2968,7 +3057,7 @@ lastTime=time;
 
 dt=Math.min(
 dt,
-0.05
+.05
 );
 
 
