@@ -7,7 +7,7 @@
 <body>
 
 <!-- =====================================================
-     MENU
+     MAIN MENU
 ===================================================== -->
 
 <div id="menu">
@@ -50,7 +50,7 @@ Start Game
 
 
 <!-- =====================================================
-     GAME
+     GAME SCREEN
 ===================================================== -->
 
 <div id="gameScreen" style="display:none;">
@@ -58,8 +58,17 @@ Start Game
 <div>
 
 <button onclick="restartGame()">Restart</button>
-<button onclick="pauseGame()" id="pauseButton">Pause</button>
-<button onclick="backToMenu()">Back to Menu</button>
+
+<button
+onclick="pauseGame()"
+id="pauseButton"
+>
+Pause
+</button>
+
+<button onclick="backToMenu()">
+Back to Menu
+</button>
 
 </div>
 
@@ -68,12 +77,15 @@ Start Game
 <div>
 
 Money: $<span id="money">200</span>
+
 &nbsp; | &nbsp;
 
 Lives: <span id="lives">40</span>
+
 &nbsp; | &nbsp;
 
 Round: <span id="round">1</span>
+
 &nbsp; | &nbsp;
 
 Score: <span id="score">0</span>
@@ -93,35 +105,45 @@ Level:
 </p>
 
 
-<!-- TOWERS -->
+<!-- =====================================================
+     TOWER BUTTONS
+===================================================== -->
 
 <button onclick="selectTowerType('Arrow')">
 Arrow $30
+(<span id="countArrow">0</span>/20)
 </button>
 
 <button onclick="selectTowerType('Rapid')">
 Rapid $55
+(<span id="countRapid">0</span>/20)
 </button>
 
 <button onclick="selectTowerType('Cannon')">
 Cannon $90
+(<span id="countCannon">0</span>/20)
 </button>
 
 <button onclick="selectTowerType('Sniper')">
 Sniper $120
+(<span id="countSniper">0</span>/20)
 </button>
 
 <button onclick="selectTowerType('Ice')">
 Ice $100
+(<span id="countIce">0</span>/20)
 </button>
 
 <button onclick="selectTowerType('Wizard')">
 Wizard $150
+(<span id="countWizard">0</span>/20)
 </button>
 
 <button onclick="selectTowerType('Farm')">
 Farm $75
+(<span id="countFarm">0</span>/20)
 </button>
+
 
 <br><br>
 
@@ -157,7 +179,6 @@ overflow:hidden;
 margin-top:15px;
 "
 >
-
 </div>
 
 
@@ -166,6 +187,10 @@ Click an empty area to build a tower.
 Click a tower to select it.
 </p>
 
+
+<!-- =====================================================
+     GAME OVER
+===================================================== -->
 
 <div id="gameOver" style="display:none;">
 
@@ -192,6 +217,13 @@ Back to Menu
 <script>
 
 /* =====================================================
+   GENERAL SETTINGS
+===================================================== */
+
+const MAX_TOWERS_PER_CLASS = 20;
+
+
+/* =====================================================
    DOM
 ===================================================== */
 
@@ -204,6 +236,7 @@ document.getElementById("game");
 ===================================================== */
 
 let chosenDifficulty = "normal";
+
 let chosenMap = 0;
 
 
@@ -290,11 +323,6 @@ roundSize: 1.5
 
 const maps = [
 
-/*
- LEVEL 1
- left -> right
-*/
-
 {
 
 name: "Level 1",
@@ -323,11 +351,6 @@ roads: [
 
 },
 
-
-/*
- LEVEL 2
- zigzag
-*/
 
 {
 
@@ -366,11 +389,6 @@ roads: [
 },
 
 
-/*
- LEVEL 3
- down then up
-*/
-
 {
 
 name: "Level 3",
@@ -407,11 +425,6 @@ roads: [
 
 },
 
-
-/*
- LEVEL 4
- long winding route
-*/
 
 {
 
@@ -465,26 +478,64 @@ roads: [
 ===================================================== */
 
 let money = 200;
+
 let lives = 40;
+
 let round = 1;
+
 let score = 0;
 
+
 let enemies = [];
+
 let towers = [];
+
 let bullets = [];
 
+
 let selectedType = "Arrow";
+
 let selectedTower = null;
 
+
 let autoplay = false;
+
 let paused = false;
 
+
 let roundRunning = false;
+
 let enemiesToSpawn = 0;
+
 let spawnTimer = 0;
+
 let nextRoundTimer = 3;
 
+
 let lastTime = performance.now();
+
+
+/* =====================================================
+   TOWER COUNTS
+===================================================== */
+
+let towerCounts = {
+
+Arrow: 0,
+
+Rapid: 0,
+
+Cannon: 0,
+
+Sniper: 0,
+
+Ice: 0,
+
+Wizard: 0,
+
+Farm: 0
+
+};
 
 
 /* =====================================================
@@ -496,104 +547,145 @@ const towerTypes = {
 Arrow: {
 
 cost:30,
+
 name:"Arrow Tower",
 
 range:150,
+
 damage:25,
+
 reload:.8,
+
 speed:500,
 
 tree1:"Power",
+
 tree2:"Range"
 
 },
+
 
 Rapid: {
 
 cost:55,
+
 name:"Rapid Tower",
 
 range:125,
+
 damage:9,
+
 reload:.16,
+
 speed:550,
 
 tree1:"Speed",
+
 tree2:"Power"
 
 },
+
 
 Cannon: {
 
 cost:90,
+
 name:"Cannon Tower",
 
 range:170,
+
 damage:45,
+
 reload:1.2,
+
 speed:350,
 
 tree1:"Blast",
+
 tree2:"Power"
 
 },
 
+
 Sniper: {
 
 cost:120,
+
 name:"Sniper Tower",
 
 range:500,
+
 damage:120,
+
 reload:2.5,
+
 speed:900,
 
 tree1:"Precision",
+
 tree2:"Range"
 
 },
+
 
 Ice: {
 
 cost:100,
+
 name:"Ice Tower",
 
 range:140,
+
 damage:8,
+
 reload:.7,
+
 speed:400,
 
 tree1:"Freeze",
+
 tree2:"Range"
 
 },
 
+
 Wizard: {
 
 cost:150,
+
 name:"Wizard Tower",
 
 range:200,
+
 damage:35,
+
 reload:.55,
+
 speed:600,
 
 tree1:"Magic",
+
 tree2:"Pierce"
 
 },
 
+
 Farm: {
 
 cost:75,
+
 name:"Farm Tower",
 
 range:0,
+
 damage:0,
+
 reload:0,
+
 speed:0,
 
 tree1:"Income",
+
 tree2:"Production"
 
 }
@@ -608,52 +700,82 @@ tree2:"Production"
 const enemyTypes = [
 
 {
+
 name:"dot",
+
 hp:20,
+
 speed:75,
+
 reward:5
+
 },
 
 {
+
 name:"cat",
+
 hp:40,
+
 speed:65,
+
 reward:8
+
 },
 
 {
+
 name:"dog",
+
 hp:75,
+
 speed:48,
+
 reward:12
+
 },
 
 {
+
 name:"bird",
+
 hp:30,
+
 speed:105,
+
 reward:10
+
 },
 
 {
+
 name:"armored",
+
 hp:180,
+
 speed:30,
+
 reward:25
+
 },
 
 {
+
 name:"boss",
+
 hp:700,
+
 speed:18,
+
 reward:100
+
 }
 
 ];
 
 
 /* =====================================================
-   MENU
+   MENU FUNCTIONS
 ===================================================== */
 
 function setDifficulty(value) {
@@ -691,6 +813,7 @@ document.getElementById(
 ).style.display =
 "none";
 
+
 document.getElementById(
 "gameScreen"
 ).style.display =
@@ -706,12 +829,15 @@ chosenDifficulty
 money =
 d.startingMoney;
 
+
 lives =
 d.startingLives;
+
 
 round = 1;
 
 score = 0;
+
 
 enemies = [];
 
@@ -719,13 +845,38 @@ towers = [];
 
 bullets = [];
 
+
+towerCounts = {
+
+Arrow:0,
+
+Rapid:0,
+
+Cannon:0,
+
+Sniper:0,
+
+Ice:0,
+
+Wizard:0,
+
+Farm:0
+
+};
+
+
 selectedTower = null;
+
 
 paused = false;
 
+autoplay = false;
+
 roundRunning = false;
 
-autoplay = false;
+enemiesToSpawn = 0;
+
+spawnTimer = 0;
 
 nextRoundTimer = 3;
 
@@ -735,10 +886,12 @@ document.getElementById(
 ).textContent =
 d.name;
 
+
 document.getElementById(
 "currentMap"
 ).textContent =
 maps[chosenMap].name;
+
 
 document.getElementById(
 "auto"
@@ -750,6 +903,12 @@ document.getElementById(
 "pauseButton"
 ).textContent =
 "Pause";
+
+
+document.getElementById(
+"gameOver"
+).style.display =
+"none";
 
 
 buildMap();
@@ -785,20 +944,26 @@ document.createElement("div");
 r.style.position =
 "absolute";
 
+
 r.style.left =
 road[0] + "px";
+
 
 r.style.top =
 road[1] + "px";
 
+
 r.style.width =
 road[2] + "px";
+
 
 r.style.height =
 road[3] + "px";
 
+
 r.style.borderTop =
 "1px solid black";
+
 
 r.style.borderBottom =
 "1px solid black";
@@ -843,7 +1008,7 @@ paused ?
 
 
 /* =====================================================
-   MENU
+   BACK TO MENU
 ===================================================== */
 
 function backToMenu() {
@@ -856,6 +1021,7 @@ document.getElementById(
 ).style.display =
 "none";
 
+
 document.getElementById(
 "menu"
 ).style.display =
@@ -865,7 +1031,7 @@ document.getElementById(
 
 
 /* =====================================================
-   UI
+   UPDATE UI
 ===================================================== */
 
 function updateUI() {
@@ -875,26 +1041,82 @@ document.getElementById(
 ).textContent =
 Math.floor(money);
 
+
 document.getElementById(
 "lives"
 ).textContent =
 lives;
+
 
 document.getElementById(
 "round"
 ).textContent =
 round;
 
+
 document.getElementById(
 "score"
 ).textContent =
 score;
 
+
+updateTowerCounts();
+
 }
 
 
 /* =====================================================
-   SELECT TOWER
+   UPDATE TOWER COUNTS
+===================================================== */
+
+function updateTowerCounts() {
+
+document.getElementById(
+"countArrow"
+).textContent =
+towerCounts.Arrow;
+
+
+document.getElementById(
+"countRapid"
+).textContent =
+towerCounts.Rapid;
+
+
+document.getElementById(
+"countCannon"
+).textContent =
+towerCounts.Cannon;
+
+
+document.getElementById(
+"countSniper"
+).textContent =
+towerCounts.Sniper;
+
+
+document.getElementById(
+"countIce"
+).textContent =
+towerCounts.Ice;
+
+
+document.getElementById(
+"countWizard"
+).textContent =
+towerCounts.Wizard;
+
+
+document.getElementById(
+"countFarm"
+).textContent =
+towerCounts.Farm;
+
+}
+
+
+/* =====================================================
+   SELECT TOWER TYPE
 ===================================================== */
 
 function selectTowerType(type) {
@@ -903,10 +1125,12 @@ selectedType = type;
 
 selectedTower = null;
 
+
 document.getElementById(
 "selected"
 ).textContent =
 towerTypes[type].name;
+
 
 showNoTowerSelected();
 
@@ -914,7 +1138,7 @@ showNoTowerSelected();
 
 
 /* =====================================================
-   ROAD CHECK
+   CHECK ROAD
 ===================================================== */
 
 function onRoad(x,y) {
@@ -940,13 +1164,14 @@ return true;
 
 }
 
+
 return false;
 
 }
 
 
 /* =====================================================
-   BUILD TOWER
+   BUILD / SELECT
 ===================================================== */
 
 game.addEventListener(
@@ -955,8 +1180,16 @@ function(event) {
 
 if (
 paused
-) return;
+) {
 
+return;
+
+}
+
+
+/*
+   SELECT EXISTING TOWER
+*/
 
 if (
 event.target.classList.contains(
@@ -980,14 +1213,28 @@ tower;
 selectedType =
 tower.type;
 
+
+document.getElementById(
+"selected"
+).textContent =
+towerTypes[
+tower.type
+].name;
+
+
 showTowerInfo();
 
 }
+
 
 return;
 
 }
 
+
+/*
+   BUILD
+*/
 
 const rect =
 game.getBoundingClientRect();
@@ -996,6 +1243,7 @@ game.getBoundingClientRect();
 const x =
 event.clientX -
 rect.left;
+
 
 const y =
 event.clientY -
@@ -1008,16 +1256,57 @@ selectedType
 ];
 
 
+/*
+   20 PER CLASS LIMIT
+*/
+
+if (
+towerCounts[selectedType]
+>=
+MAX_TOWERS_PER_CLASS
+) {
+
+alert(
+"You already have 20 " +
+data.name +
+"s."
+);
+
+return;
+
+}
+
+
+/*
+   MONEY CHECK
+*/
+
 if (
 money <
 data.cost
-) return;
+) {
 
+return;
+
+}
+
+
+/*
+   ROAD CHECK
+*/
 
 if (
 onRoad(x,y)
-) return;
+) {
 
+return;
+
+}
+
+
+/*
+   CHECK TOWER OVERLAP
+*/
 
 for (
 let tower of towers
@@ -1037,9 +1326,17 @@ return;
 }
 
 
+/*
+   PAY
+*/
+
 money -=
 data.cost;
 
+
+/*
+   CREATE ELEMENT
+*/
 
 const element =
 document.createElement(
@@ -1058,20 +1355,29 @@ data.name;
 element.style.position =
 "absolute";
 
+
 element.style.left =
 x+"px";
+
 
 element.style.top =
 y+"px";
 
+
 element.style.transform =
 "translate(-50%,-50%)";
+
 
 element.style.fontWeight =
 "bold";
 
+
 element.style.cursor =
 "pointer";
+
+
+element.title =
+data.name;
 
 
 game.appendChild(
@@ -1079,9 +1385,14 @@ element
 );
 
 
+/*
+   CREATE TOWER
+*/
+
 const tower = {
 
 x:x,
+
 y:y,
 
 type:selectedType,
@@ -1093,17 +1404,40 @@ cooldown:0,
 farmTimer:5,
 
 path1:0,
-path2:0
+
+path2:0,
+
+spent:data.cost
 
 };
 
+
+/*
+   STORE
+*/
 
 towers.push(
 tower
 );
 
+
+/*
+   INCREASE CLASS COUNT
+*/
+
+towerCounts[
+selectedType
+]++;
+
+
 selectedTower =
 tower;
+
+
+document.getElementById(
+"selected"
+).textContent =
+data.name;
 
 
 showTowerInfo();
@@ -1119,19 +1453,28 @@ updateUI();
 
 function upgradeCost(level) {
 
-return [
+const costs = [
+
 50,
+
 100,
+
 175,
+
 275,
+
 400
-][level] || null;
+
+];
+
+
+return costs[level] || null;
 
 }
 
 
 /* =====================================================
-   STATS
+   TOWER STATS
 ===================================================== */
 
 function getStats(tower) {
@@ -1145,21 +1488,30 @@ tower.type
 let range =
 base.range;
 
+
 let damage =
 base.damage;
+
 
 let reload =
 base.reload;
 
+
 let splash =
 0;
+
 
 let slow =
 0;
 
+
 let pierce =
 1;
 
+
+/*
+   ARROW
+*/
 
 if (
 tower.type ===
@@ -1170,11 +1522,16 @@ damage *=
 1 +
 tower.path1*.35;
 
+
 range +=
 tower.path2*35;
 
 }
 
+
+/*
+   RAPID
+*/
 
 if (
 tower.type ===
@@ -1182,15 +1539,20 @@ tower.type ===
 ) {
 
 reload /=
-1+
+1 +
 tower.path1*.25;
 
+
 damage *=
-1+
+1 +
 tower.path2*.30;
 
 }
 
+
+/*
+   CANNON
+*/
 
 if (
 tower.type ===
@@ -1200,12 +1562,17 @@ tower.type ===
 splash =
 tower.path1*20;
 
+
 damage *=
-1+
+1 +
 tower.path2*.35;
 
 }
 
+
+/*
+   SNIPER
+*/
 
 if (
 tower.type ===
@@ -1213,14 +1580,19 @@ tower.type ===
 ) {
 
 damage *=
-1+
+1 +
 tower.path1*.45;
+
 
 range +=
 tower.path2*80;
 
 }
 
+
+/*
+   ICE
+*/
 
 if (
 tower.type ===
@@ -1230,11 +1602,16 @@ tower.type ===
 slow =
 tower.path1*.5;
 
+
 range +=
 tower.path2*35;
 
 }
 
+
+/*
+   WIZARD
+*/
 
 if (
 tower.type ===
@@ -1242,8 +1619,9 @@ tower.type ===
 ) {
 
 damage *=
-1+
+1 +
 tower.path1*.30;
+
 
 pierce +=
 tower.path2*2;
@@ -1254,10 +1632,15 @@ tower.path2*2;
 return {
 
 range,
+
 damage,
+
 reload,
+
 splash,
+
 slow,
+
 pierce
 
 };
@@ -1272,23 +1655,9 @@ pierce
 function farmIncome(tower) {
 
 let income =
-15;
-
-
-/*
-   Income path:
-   +$10 every level
-*/
-
-income +=
+15 +
 tower.path1*10;
 
-
-/*
-   Production path:
-   makes the farm pay
-   more frequently.
-*/
 
 let interval =
 5 -
@@ -1305,6 +1674,7 @@ interval
 return {
 
 income,
+
 interval
 
 };
@@ -1313,7 +1683,7 @@ interval
 
 
 /* =====================================================
-   UPGRADE UI
+   NO TOWER SELECTED
 ===================================================== */
 
 function showNoTowerSelected() {
@@ -1326,9 +1696,15 @@ document.getElementById(
 }
 
 
+/* =====================================================
+   TOWER INFORMATION
+===================================================== */
+
 function showTowerInfo() {
 
-if (!selectedTower) {
+if (
+!selectedTower
+) {
 
 showNoTowerSelected();
 
@@ -1340,6 +1716,7 @@ return;
 const tower =
 selectedTower;
 
+
 const data =
 towerTypes[
 tower.type
@@ -1350,6 +1727,7 @@ const cost1 =
 upgradeCost(
 tower.path1
 );
+
 
 const cost2 =
 upgradeCost(
@@ -1367,6 +1745,10 @@ data.name +
 "</b><br>";
 
 
+/*
+   FARM INFORMATION
+*/
+
 if (
 tower.type ===
 "Farm"
@@ -1375,10 +1757,12 @@ tower.type ===
 const farm =
 farmIncome(tower);
 
+
 html +=
 "Current income: $" +
 farm.income +
 "<br>";
+
 
 html +=
 "Current interval: " +
@@ -1387,6 +1771,10 @@ farm.interval.toFixed(1) +
 
 }
 
+
+/*
+   PATH 1
+*/
 
 html +=
 data.tree1 +
@@ -1408,15 +1796,22 @@ else {
 
 html +=
 "<button onclick=\"upgradePath(1)\">" +
+
 "Upgrade " +
 data.tree1 +
+
 " ($" +
 cost1 +
 ")" +
+
 "</button>";
 
 }
 
+
+/*
+   PATH 2
+*/
 
 html +=
 "<br><br>";
@@ -1442,21 +1837,25 @@ else {
 
 html +=
 "<button onclick=\"upgradePath(2)\">" +
+
 "Upgrade " +
 data.tree2 +
+
 " ($" +
 cost2 +
 ")" +
+
 "</button>";
 
 }
 
 
-html +=
-"<br><br>";
+/*
+   DESCRIPTIONS
+*/
 
-
 html +=
+"<br><br>" +
 "<b>Next upgrades:</b>";
 
 
@@ -1492,6 +1891,20 @@ tower,
 }
 
 
+/*
+   SELL BUTTON
+*/
+
+html +=
+"<br><br>" +
+
+"<button onclick=\"sellSelectedTower()\">" +
+
+"Sell Tower" +
+
+"</button>";
+
+
 document.getElementById(
 "upgrades"
 ).innerHTML =
@@ -1501,7 +1914,7 @@ html;
 
 
 /* =====================================================
-   UPGRADE DESCRIPTIONS
+   UPGRADE DESCRIPTION
 ===================================================== */
 
 function upgradeDescription(
@@ -1509,20 +1922,16 @@ tower,
 path
 ) {
 
-const level =
-path === 1 ?
-tower.path1 :
-tower.path2;
-
-
 if (
 tower.type ===
 "Farm"
 ) {
 
-if (path === 1) {
+if (
+path === 1
+) {
 
-return "$10 more income per payment";
+return "$10 more money per payment";
 
 }
 
@@ -1536,8 +1945,10 @@ tower.type ===
 "Arrow"
 ) {
 
-return path===1 ?
-"more damage" :
+return path === 1
+?
+"more damage"
+:
 "more range";
 
 }
@@ -1548,8 +1959,10 @@ tower.type ===
 "Rapid"
 ) {
 
-return path===1 ?
-"faster firing" :
+return path === 1
+?
+"faster firing"
+:
 "more damage";
 
 }
@@ -1560,8 +1973,10 @@ tower.type ===
 "Cannon"
 ) {
 
-return path===1 ?
-"larger explosions" :
+return path === 1
+?
+"larger explosions"
+:
 "more damage";
 
 }
@@ -1572,8 +1987,10 @@ tower.type ===
 "Sniper"
 ) {
 
-return path===1 ?
-"more damage" :
+return path === 1
+?
+"more damage"
+:
 "more range";
 
 }
@@ -1584,8 +2001,10 @@ tower.type ===
 "Ice"
 ) {
 
-return path===1 ?
-"stronger slowing" :
+return path === 1
+?
+"stronger slowing"
+:
 "more range";
 
 }
@@ -1596,8 +2015,10 @@ tower.type ===
 "Wizard"
 ) {
 
-return path===1 ?
-"more damage" :
+return path === 1
+?
+"more damage"
+:
 "more targets hit";
 
 }
@@ -1609,13 +2030,18 @@ return "stronger";
 
 
 /* =====================================================
-   UPGRADE
+   UPGRADE TOWER
 ===================================================== */
 
 function upgradePath(path) {
 
-if (!selectedTower)
+if (
+!selectedTower
+) {
+
 return;
+
+}
 
 
 const tower =
@@ -1623,15 +2049,20 @@ selectedTower;
 
 
 const level =
-path === 1 ?
-tower.path1 :
+path === 1
+?
+tower.path1
+:
 tower.path2;
 
 
 if (
 level >= 5
-)
+) {
+
 return;
+
+}
 
 
 const cost =
@@ -1641,11 +2072,18 @@ upgradeCost(level);
 if (
 money <
 cost
-)
+) {
+
 return;
+
+}
 
 
 money -=
+cost;
+
+
+tower.spent +=
 cost;
 
 
@@ -1668,6 +2106,7 @@ updateTowerText(
 tower
 );
 
+
 showTowerInfo();
 
 updateUI();
@@ -1676,10 +2115,106 @@ updateUI();
 
 
 /* =====================================================
-   TOWER TEXT
+   SELL TOWER
 ===================================================== */
 
-function updateTowerText(tower) {
+function sellSelectedTower() {
+
+if (
+!selectedTower
+) {
+
+return;
+
+}
+
+
+const tower =
+selectedTower;
+
+
+/*
+   70% REFUND
+   OF EVERYTHING SPENT
+*/
+
+const refund =
+Math.floor(
+tower.spent *
+0.70
+);
+
+
+money +=
+refund;
+
+
+/*
+   DECREASE CLASS COUNT
+*/
+
+towerCounts[
+tower.type
+]--;
+
+
+/*
+   REMOVE FROM PAGE
+*/
+
+tower.element.remove();
+
+
+/*
+   REMOVE FROM ARRAY
+*/
+
+const index =
+towers.indexOf(
+tower
+);
+
+
+if (
+index !== -1
+) {
+
+towers.splice(
+index,
+1
+);
+
+}
+
+
+/*
+   DESELECT
+*/
+
+selectedTower =
+null;
+
+
+document.getElementById(
+"selected"
+).textContent =
+"None";
+
+
+showNoTowerSelected();
+
+updateUI();
+
+}
+
+
+/* =====================================================
+   UPDATE TOWER TEXT
+===================================================== */
+
+function updateTowerText(
+tower
+) {
 
 const data =
 towerTypes[
@@ -1687,7 +2222,7 @@ tower.type
 ];
 
 
-const totalLevel =
+const level =
 tower.path1 +
 tower.path2;
 
@@ -1695,19 +2230,31 @@ tower.path2;
 tower.element.textContent =
 data.name +
 " " +
-totalLevel;
+level;
+
+
+tower.element.title =
+data.name +
+"\n" +
+"Path 1: " +
+tower.path1 +
+"\n" +
+"Path 2: " +
+tower.path2;
 
 }
 
 
 /* =====================================================
-   PATH POSITION
+   GET POSITION ON MAP
 ===================================================== */
 
 function getPath(distance) {
 
 const path =
-maps[chosenMap].path;
+maps[
+chosenMap
+].path;
 
 
 let remaining =
@@ -1723,12 +2270,14 @@ i++
 const a =
 path[i];
 
+
 const b =
 path[i+1];
 
 
 const dx =
 b.x-a.x;
+
 
 const dy =
 b.y-a.y;
@@ -1747,7 +2296,7 @@ length
 ) {
 
 const ratio =
-remaining/
+remaining /
 length;
 
 
@@ -1786,9 +2335,13 @@ path.length-1
 function pathLength() {
 
 const path =
-maps[chosenMap].path;
+maps[
+chosenMap
+].path;
 
-let total=0;
+
+let total =
+0;
 
 
 for (
@@ -1799,11 +2352,13 @@ i++
 
 total +=
 Math.hypot(
-path[i+1].x-
+
+path[i+1].x -
 path[i].x,
 
-path[i+1].y-
+path[i+1].y -
 path[i].y
+
 );
 
 }
@@ -1828,7 +2383,7 @@ Math.random();
 
 if (
 round >= 12 &&
-Math.random()<.06
+Math.random() < .06
 ) {
 
 type =
@@ -1837,8 +2392,8 @@ enemyTypes[5];
 }
 
 else if (
-round>=6 &&
-r<.20
+round >= 6 &&
+r < .20
 ) {
 
 type =
@@ -1847,7 +2402,7 @@ enemyTypes[4];
 }
 
 else if (
-r<.40
+r < .40
 ) {
 
 type =
@@ -1856,7 +2411,7 @@ enemyTypes[3];
 }
 
 else if (
-r<.65
+r < .65
 ) {
 
 type =
@@ -1865,7 +2420,7 @@ enemyTypes[2];
 }
 
 else if (
-r<.85
+r < .85
 ) {
 
 type =
@@ -1893,7 +2448,7 @@ difficulty.enemyHealth;
 
 
 hp +=
-round*6;
+round * 6;
 
 
 if (
@@ -1902,7 +2457,7 @@ type.name ===
 ) {
 
 hp +=
-round*40;
+round * 40;
 
 }
 
@@ -1920,14 +2475,18 @@ type.name;
 element.style.position =
 "absolute";
 
+
 element.style.color =
 "red";
+
 
 element.style.fontWeight =
 "bold";
 
+
 element.style.transform =
 "translate(-50%,-50%)";
+
 
 element.style.whiteSpace =
 "nowrap";
@@ -1958,7 +2517,7 @@ hp:hp,
 distance:0,
 
 speed:
-type.speed*
+type.speed *
 difficulty.enemySpeed,
 
 slow:0,
@@ -1979,8 +2538,11 @@ function startRound() {
 if (
 roundRunning ||
 paused
-)
+) {
+
 return;
+
+}
 
 
 roundRunning =
@@ -1995,24 +2557,29 @@ chosenDifficulty
 
 enemiesToSpawn =
 Math.floor(
+
 (
-7+
-round*2
-)*
+7 +
+round * 2
+)
+*
 difficulty.roundSize
+
 );
 
 
 if (
-round%5===0
+round % 5 === 0
 ) {
 
-enemiesToSpawn +=5;
+enemiesToSpawn +=
+5;
 
 }
 
 
-spawnTimer=0;
+spawnTimer =
+0;
 
 }
 
@@ -2033,7 +2600,7 @@ dt;
 
 if (
 autoplay &&
-nextRoundTimer<=0
+nextRoundTimer <= 0
 ) {
 
 startRound();
@@ -2051,38 +2618,53 @@ dt;
 
 
 if (
-enemiesToSpawn>0 &&
-spawnTimer<=0
+enemiesToSpawn > 0 &&
+spawnTimer <= 0
 ) {
 
 spawnEnemy();
 
+
 enemiesToSpawn--;
+
 
 spawnTimer =
 Math.max(
+
 .15,
-.45-
-round*.005
+
+.45 -
+round * .005
+
 );
 
 }
 
 
+/*
+   ROUND COMPLETE
+*/
+
 if (
-enemiesToSpawn===0 &&
-enemies.length===0
+enemiesToSpawn === 0 &&
+enemies.length === 0
 ) {
 
-roundRunning=false;
+roundRunning =
+false;
 
-nextRoundTimer=3;
+
+nextRoundTimer =
+3;
+
 
 money +=
-20+
-round*3;
+20 +
+round * 3;
+
 
 round++;
+
 
 updateUI();
 
@@ -2112,7 +2694,9 @@ tower.type ===
 ) {
 
 const farm =
-farmIncome(tower);
+farmIncome(
+tower
+);
 
 
 tower.farmTimer -=
@@ -2120,18 +2704,21 @@ dt;
 
 
 if (
-tower.farmTimer<=0
+tower.farmTimer <= 0
 ) {
 
 money +=
 farm.income;
 
+
 tower.farmTimer =
 farm.interval;
+
 
 updateUI();
 
 }
+
 
 continue;
 
@@ -2143,7 +2730,9 @@ continue;
 */
 
 const stats =
-getStats(tower);
+getStats(
+tower
+);
 
 
 tower.cooldown -=
@@ -2151,14 +2740,20 @@ dt;
 
 
 if (
-tower.cooldown>0
-)
+tower.cooldown > 0
+) {
+
 continue;
 
+}
 
-let target=null;
 
-let best=-Infinity;
+let target =
+null;
+
+
+let best =
+-Infinity;
 
 
 for (
@@ -2173,24 +2768,30 @@ enemy.distance
 
 const distance =
 Math.hypot(
-p.x-tower.x,
-p.y-tower.y
+
+p.x -
+tower.x,
+
+p.y -
+tower.y
+
 );
 
 
 if (
-distance<=
+distance <=
 stats.range
 ) {
 
 if (
-enemy.distance>
+enemy.distance >
 best
 ) {
 
-target=enemy;
+target =
+enemy;
 
-best=
+best =
 enemy.distance;
 
 }
@@ -2200,12 +2801,15 @@ enemy.distance;
 }
 
 
-if (target) {
+if (
+target
+) {
 
 fire(
 tower,
 target
 );
+
 
 tower.cooldown =
 stats.reload;
@@ -2227,7 +2831,9 @@ target
 ) {
 
 const stats =
-getStats(tower);
+getStats(
+tower
+);
 
 
 const element =
@@ -2243,8 +2849,10 @@ element.textContent =
 element.style.position =
 "absolute";
 
+
 element.style.fontSize =
 "10px";
+
 
 element.style.fontWeight =
 "bold";
@@ -2294,10 +2902,10 @@ element:element
 function bulletUpdate(dt) {
 
 for (
-let i=
-bullets.length-1;
+let i =
+bullets.length - 1;
 
-i>=0;
+i >= 0;
 
 i--
 ) {
@@ -2314,10 +2922,12 @@ bullet.target
 
 bullet.element.remove();
 
+
 bullets.splice(
 i,
 1
 );
+
 
 continue;
 
@@ -2331,10 +2941,13 @@ bullet.target.distance
 
 
 const dx =
-p.x-bullet.x;
+p.x -
+bullet.x;
+
 
 const dy =
-p.y-bullet.y;
+p.y -
+bullet.y;
 
 
 const distance =
@@ -2345,17 +2958,22 @@ dy
 
 
 const movement =
-bullet.speed*dt;
+bullet.speed *
+dt;
 
 
 if (
-distance<=
+distance <=
 movement
 ) {
 
-hit(bullet);
+hit(
+bullet
+);
+
 
 bullet.element.remove();
+
 
 bullets.splice(
 i,
@@ -2367,19 +2985,23 @@ i,
 else {
 
 bullet.x +=
-dx/distance*
+dx / distance *
 movement;
 
+
 bullet.y +=
-dy/distance*
+dy / distance *
 movement;
 
 
 bullet.element.style.left =
-bullet.x+"px";
+bullet.x +
+"px";
+
 
 bullet.element.style.top =
-bullet.y+"px";
+bullet.y +
+"px";
 
 }
 
@@ -2389,10 +3011,12 @@ bullet.y+"px";
 
 
 /* =====================================================
-   HIT
+   BULLET HIT
 ===================================================== */
 
-function hit(bullet) {
+function hit(
+bullet
+) {
 
 const target =
 bullet.target;
@@ -2407,14 +3031,17 @@ bullet.damage;
 */
 
 if (
-bullet.slow>0
+bullet.slow > 0
 ) {
 
 target.slow =
 Math.max(
+
 target.slow,
-1.5+
+
+1.5 +
 bullet.slow
+
 );
 
 }
@@ -2425,7 +3052,7 @@ bullet.slow
 */
 
 if (
-bullet.splash>0
+bullet.splash > 0
 ) {
 
 const center =
@@ -2439,9 +3066,13 @@ let enemy of enemies
 ) {
 
 if (
-enemy===target
-)
+enemy ===
+target
+) {
+
 continue;
+
+}
 
 
 const p =
@@ -2452,16 +3083,22 @@ enemy.distance
 
 if (
 Math.hypot(
-center.x-p.x,
-center.y-p.y
+
+center.x -
+p.x,
+
+center.y -
+p.y
+
 )
 <
-55+
+55 +
 bullet.splash
 ) {
 
 enemy.hp -=
-bullet.damage*.45;
+bullet.damage *
+.45;
 
 }
 
@@ -2475,10 +3112,11 @@ bullet.damage*.45;
 */
 
 if (
-bullet.pierce>1
+bullet.pierce > 1
 ) {
 
-let hits=0;
+let hits =
+0;
 
 
 const center =
@@ -2492,16 +3130,23 @@ let enemy of enemies
 ) {
 
 if (
-enemy===target
-)
+enemy ===
+target
+) {
+
 continue;
+
+}
 
 
 if (
-hits>=
-bullet.pierce-1
-)
+hits >=
+bullet.pierce - 1
+) {
+
 break;
+
+}
 
 
 const p =
@@ -2512,15 +3157,22 @@ enemy.distance
 
 if (
 Math.hypot(
-center.x-p.x,
-center.y-p.y
+
+center.x -
+p.x,
+
+center.y -
+p.y
+
 )
 <
 50
 ) {
 
 enemy.hp -=
-bullet.damage*.5;
+bullet.damage *
+.5;
+
 
 hits++;
 
@@ -2537,7 +3189,7 @@ checkDeaths();
 
 
 /* =====================================================
-   DEATHS
+   CHECK DEATHS
 ===================================================== */
 
 function checkDeaths() {
@@ -2549,10 +3201,10 @@ chosenDifficulty
 
 
 for (
-let i=
-enemies.length-1;
+let i =
+enemies.length - 1;
 
-i>=0;
+i >= 0;
 
 i--
 ) {
@@ -2562,15 +3214,17 @@ enemies[i];
 
 
 if (
-enemy.hp<=0
+enemy.hp <= 0
 ) {
 
 money +=
-enemy.type.reward*
+enemy.type.reward *
 difficulty.moneyMultiplier;
 
+
 score +=
-enemy.type.reward*10;
+enemy.type.reward *
+10;
 
 
 enemy.element.remove();
@@ -2602,10 +3256,10 @@ pathLength();
 
 
 for (
-let i=
-enemies.length-1;
+let i =
+enemies.length - 1;
 
-i>=0;
+i >= 0;
 
 i--
 ) {
@@ -2619,18 +3273,22 @@ enemy.speed;
 
 
 if (
-enemy.slow>0
+enemy.slow > 0
 ) {
 
-speed*=.45;
+speed *=
+.45;
 
-enemy.slow-=dt;
+
+enemy.slow -=
+dt;
 
 }
 
 
 enemy.distance +=
-speed*dt;
+speed *
+dt;
 
 
 const p =
@@ -2640,14 +3298,21 @@ enemy.distance
 
 
 enemy.element.style.left =
-p.x+"px";
+p.x +
+"px";
+
 
 enemy.element.style.top =
-p.y+"px";
+p.y +
+"px";
 
+
+/*
+   ENEMY REACHES END
+*/
 
 if (
-enemy.distance>
+enemy.distance >
 total
 ) {
 
@@ -2661,11 +3326,12 @@ i,
 
 
 if (
-enemy.type.name===
+enemy.type.name ===
 "boss"
 ) {
 
-lives-=5;
+lives -=
+5;
 
 }
 
@@ -2680,7 +3346,7 @@ updateUI();
 
 
 if (
-lives<=0
+lives <= 0
 ) {
 
 gameOver();
@@ -2707,15 +3373,17 @@ autoplay =
 document.getElementById(
 "auto"
 ).textContent =
-autoplay ?
-"ON":
+autoplay
+?
+"ON"
+:
 "OFF";
 
 
 if (
 autoplay &&
 !roundRunning &&
-enemies.length===0
+enemies.length === 0
 ) {
 
 startRound();
@@ -2731,9 +3399,12 @@ startRound();
 
 function gameOver() {
 
-roundRunning=false;
+roundRunning =
+false;
 
-paused=true;
+
+paused =
+true;
 
 
 document.getElementById(
@@ -2757,7 +3428,8 @@ document.getElementById(
 function loop(time) {
 
 let dt =
-(time-lastTime)/1000;
+(time - lastTime) /
+1000;
 
 
 lastTime =
@@ -2775,7 +3447,8 @@ if (
 !paused &&
 document.getElementById(
 "gameScreen"
-).style.display!=="none"
+).style.display !==
+"none"
 ) {
 
 roundUpdate(dt);
