@@ -20,31 +20,27 @@ Score: <span id="score">0</span>
 
 <br>
 
-<button onclick="selectTower('Arrow')">Arrow Tower $30</button>
-<button onclick="selectTower('Rapid')">Rapid Tower $55</button>
-<button onclick="selectTower('Cannon')">Cannon Tower $90</button>
-<button onclick="selectTower('Sniper')">Sniper Tower $120</button>
-<button onclick="selectTower('Ice')">Ice Tower $100</button>
-<button onclick="selectTower('Wizard')">Wizard Tower $150</button>
+<button onclick="selectTowerType('Arrow')">Arrow Tower $30</button>
+<button onclick="selectTowerType('Rapid')">Rapid Tower $55</button>
+<button onclick="selectTowerType('Cannon')">Cannon Tower $90</button>
+<button onclick="selectTowerType('Sniper')">Sniper Tower $120</button>
+<button onclick="selectTowerType('Ice')">Ice Tower $100</button>
+<button onclick="selectTowerType('Wizard')">Wizard Tower $150</button>
 
 <br><br>
 
-Selected tower:
-<b id="selected">Arrow Tower</b>
+Selected:
+<b id="selected">None</b>
 
-<br><br>
+<div id="upgrades"></div>
+
+<br>
 
 <button onclick="toggleAuto()">
 Autoplay: <span id="auto">OFF</span>
 </button>
 
-<button onclick="startRound()">
-Start Round
-</button>
-
-<button onclick="upgradeSelected()">
-Upgrade selected tower
-</button>
+<button onclick="startRound()">Start Round</button>
 
 <div
     id="game"
@@ -58,7 +54,7 @@ Upgrade selected tower
     "
 >
 
-    <!-- PATH -->
+    <!-- road -->
 
     <div style="
         position:absolute;
@@ -93,8 +89,8 @@ Upgrade selected tower
 </div>
 
 <p>
-Click empty ground to build a tower.
-Click a tower to select it.
+Click empty ground to build a tower.<br>
+Click a tower to select it and show its upgrade trees.
 </p>
 
 <div id="gameOver" style="display:none;">
@@ -119,9 +115,9 @@ const game =
     document.getElementById("game");
 
 
-/* -------------------------
-   GAME VARIABLES
-------------------------- */
+/* =========================================================
+   GAME STATE
+========================================================= */
 
 let money = 200;
 let lives = 40;
@@ -140,132 +136,118 @@ let autoplay = false;
 let roundRunning = false;
 let enemiesToSpawn = 0;
 let spawnTimer = 0;
-
-let nextRoundTimer = 3;
+let nextRoundTimer = 2;
 
 let lastTime = performance.now();
 
 
-/* -------------------------
-   TOWER TYPES
-------------------------- */
+/* =========================================================
+   TOWER DATA
+========================================================= */
 
 const towerTypes = {
 
     Arrow: {
 
         cost: 30,
-
-        range: 150,
-
-        damage: 25,
-
-        reload: 0.8,
-
-        projectileSpeed: 500,
-
         name: "Arrow Tower",
 
-        special: "single"
+        range: 150,
+        damage: 25,
+        reload: 0.8,
+        projectileSpeed: 500,
+
+        tree1: "Power",
+        tree2: "Range"
 
     },
+
 
     Rapid: {
 
         cost: 55,
-
-        range: 125,
-
-        damage: 9,
-
-        reload: 0.16,
-
-        projectileSpeed: 550,
-
         name: "Rapid Tower",
 
-        special: "single"
+        range: 125,
+        damage: 9,
+        reload: 0.16,
+        projectileSpeed: 550,
+
+        tree1: "Speed",
+        tree2: "Power"
 
     },
+
 
     Cannon: {
 
         cost: 90,
-
-        range: 170,
-
-        damage: 45,
-
-        reload: 1.2,
-
-        projectileSpeed: 350,
-
         name: "Cannon Tower",
 
-        special: "splash"
+        range: 170,
+        damage: 45,
+        reload: 1.2,
+        projectileSpeed: 350,
+
+        tree1: "Blast",
+        tree2: "Power"
 
     },
+
 
     Sniper: {
 
         cost: 120,
-
-        range: 500,
-
-        damage: 120,
-
-        reload: 2.5,
-
-        projectileSpeed: 900,
-
         name: "Sniper Tower",
 
-        special: "single"
+        range: 500,
+        damage: 120,
+        reload: 2.5,
+        projectileSpeed: 900,
+
+        tree1: "Precision",
+        tree2: "Range"
 
     },
+
 
     Ice: {
 
         cost: 100,
-
-        range: 140,
-
-        damage: 8,
-
-        reload: 0.7,
-
-        projectileSpeed: 400,
-
         name: "Ice Tower",
 
-        special: "slow"
+        range: 140,
+        damage: 8,
+        reload: 0.7,
+        projectileSpeed: 400,
+
+        tree1: "Freeze",
+        tree2: "Range"
 
     },
+
 
     Wizard: {
 
         cost: 150,
-
-        range: 200,
-
-        damage: 35,
-
-        reload: 0.55,
-
-        projectileSpeed: 600,
-
         name: "Wizard Tower",
 
-        special: "pierce"
+        range: 200,
+        damage: 35,
+        reload: 0.55,
+        projectileSpeed: 600,
+
+        tree1: "Magic",
+        tree2: "Pierce"
 
     }
 
 };
 
 
-/* -------------------------
+/* =========================================================
    ENEMIES
-------------------------- */
+========================================================= */
 
 const enemyTypes = [
 
@@ -314,9 +296,9 @@ const enemyTypes = [
 ];
 
 
-/* -------------------------
+/* =========================================================
    UI
-------------------------- */
+========================================================= */
 
 function updateUI() {
 
@@ -335,24 +317,28 @@ function updateUI() {
 }
 
 
-/* -------------------------
-   SELECT TOWER
-------------------------- */
+/* =========================================================
+   TOWER TYPE SELECTION
+========================================================= */
 
-function selectTower(type) {
+function selectTowerType(type) {
 
     selectedType = type;
+
+    selectedTower = null;
 
     document.getElementById("selected")
         .textContent =
         towerTypes[type].name;
 
+    showNoTowerSelected();
+
 }
 
 
-/* -------------------------
-   ROAD CHECK
-------------------------- */
+/* =========================================================
+   ROAD
+========================================================= */
 
 function onRoad(x, y) {
 
@@ -382,16 +368,22 @@ function onRoad(x, y) {
     }
 
     return false;
+
 }
 
 
-/* -------------------------
-   BUILD TOWER
-------------------------- */
+/* =========================================================
+   BUILD / SELECT TOWERS
+========================================================= */
 
 game.addEventListener(
     "click",
     function(event) {
+
+        /*
+            If the click was on an existing tower,
+            select it.
+        */
 
         if (
             event.target.classList.contains(
@@ -399,34 +391,33 @@ game.addEventListener(
             )
         ) {
 
-            for (
-                let tower of towers
-            ) {
+            const tower =
+                towers.find(
+                    t =>
+                    t.element ===
+                    event.target
+                );
 
-                if (
-                    event.target ===
-                    tower.element
-                ) {
+            if (tower) {
 
-                    selectedTower = tower;
+                selectedTower =
+                    tower;
 
-                    document.getElementById(
-                        "selected"
-                    ).textContent =
-                        towerTypes[
-                            tower.type
-                        ].name +
-                        " level " +
-                        tower.level;
+                selectedType =
+                    tower.type;
 
-                    return;
-                }
+                showTowerInfo();
 
             }
 
             return;
+
         }
 
+
+        /*
+            Otherwise build.
+        */
 
         const rect =
             game.getBoundingClientRect();
@@ -444,11 +435,17 @@ game.addEventListener(
             towerTypes[selectedType];
 
 
-        if (money < data.cost) {
+        if (
+            money <
+            data.cost
+        ) {
             return;
         }
 
-        if (onRoad(x, y)) {
+
+        if (
+            onRoad(x, y)
+        ) {
             return;
         }
 
@@ -475,9 +472,13 @@ game.addEventListener(
 
 
         const element =
-            document.createElement("span");
+            document.createElement(
+                "span"
+            );
 
-        element.className = "tower";
+
+        element.className =
+            "tower";
 
         element.textContent =
             data.name;
@@ -505,29 +506,39 @@ game.addEventListener(
             data.name;
 
 
-        game.appendChild(element);
+        game.appendChild(
+            element
+        );
 
 
         const tower = {
 
             x: x,
-
             y: y,
 
             type: selectedType,
 
-            level: 1,
+            element: element,
 
             cooldown: 0,
 
-            element: element
+            path1: 0,
+
+            path2: 0
 
         };
 
 
-        towers.push(tower);
+        towers.push(
+            tower
+        );
 
-        selectedTower = tower;
+
+        selectedTower =
+            tower;
+
+
+        showTowerInfo();
 
         updateUI();
 
@@ -535,11 +546,496 @@ game.addEventListener(
 );
 
 
-/* -------------------------
-   UPGRADE
-------------------------- */
+/* =========================================================
+   UPGRADE COST
+========================================================= */
 
-function upgradeSelected() {
+function upgradeCost(level) {
+
+    /*
+        level 0 -> $50
+        level 1 -> $100
+        level 2 -> $175
+        level 3 -> $275
+        level 4 -> $400
+    */
+
+    const costs = [
+        50,
+        100,
+        175,
+        275,
+        400
+    ];
+
+    return costs[level] ||
+        null;
+
+}
+
+
+/* =========================================================
+   UPGRADE TREE EFFECTS
+========================================================= */
+
+function getStats(tower) {
+
+    const base =
+        towerTypes[tower.type];
+
+
+    let range =
+        base.range;
+
+    let damage =
+        base.damage;
+
+    let reload =
+        base.reload;
+
+    let splash =
+        0;
+
+    let slow =
+        0;
+
+    let pierce =
+        1;
+
+
+    /*
+        TREE 1
+    */
+
+    if (
+        tower.type === "Arrow"
+    ) {
+
+        damage *=
+            1 +
+            tower.path1 *
+            0.35;
+
+    }
+
+
+    if (
+        tower.type === "Rapid"
+    ) {
+
+        reload /=
+            1 +
+            tower.path1 *
+            0.25;
+
+    }
+
+
+    if (
+        tower.type === "Cannon"
+    ) {
+
+        splash =
+            tower.path1 *
+            20;
+
+    }
+
+
+    if (
+        tower.type === "Sniper"
+    ) {
+
+        damage *=
+            1 +
+            tower.path1 *
+            0.45;
+
+    }
+
+
+    if (
+        tower.type === "Ice"
+    ) {
+
+        slow =
+            tower.path1 *
+            0.5;
+
+    }
+
+
+    if (
+        tower.type === "Wizard"
+    ) {
+
+        damage *=
+            1 +
+            tower.path1 *
+            0.30;
+
+    }
+
+
+    /*
+        TREE 2
+    */
+
+    if (
+        tower.type === "Arrow"
+    ) {
+
+        range +=
+            tower.path2 *
+            35;
+
+    }
+
+
+    if (
+        tower.type === "Rapid"
+    ) {
+
+        damage *=
+            1 +
+            tower.path2 *
+            0.30;
+
+    }
+
+
+    if (
+        tower.type === "Cannon"
+    ) {
+
+        damage *=
+            1 +
+            tower.path2 *
+            0.35;
+
+    }
+
+
+    if (
+        tower.type === "Sniper"
+    ) {
+
+        range +=
+            tower.path2 *
+            80;
+
+    }
+
+
+    if (
+        tower.type === "Ice"
+    ) {
+
+        range +=
+            tower.path2 *
+            35;
+
+    }
+
+
+    if (
+        tower.type === "Wizard"
+    ) {
+
+        pierce +=
+            tower.path2 *
+            2;
+
+    }
+
+
+    return {
+
+        range,
+        damage,
+        reload,
+        splash,
+        slow,
+        pierce
+
+    };
+
+}
+
+
+/* =========================================================
+   UPGRADE TREE UI
+========================================================= */
+
+function showNoTowerSelected() {
+
+    document.getElementById(
+        "upgrades"
+    ).innerHTML =
+        "Select a tower to upgrade it.";
+
+}
+
+
+function showTowerInfo() {
+
+    if (!selectedTower) {
+
+        showNoTowerSelected();
+
+        return;
+
+    }
+
+
+    const tower =
+        selectedTower;
+
+
+    const data =
+        towerTypes[tower.type];
+
+
+    const cost1 =
+        upgradeCost(
+            tower.path1
+        );
+
+
+    const cost2 =
+        upgradeCost(
+            tower.path2
+        );
+
+
+    let html = "";
+
+
+    html +=
+        "<hr>" +
+        "<b>" +
+        data.name +
+        "</b>" +
+        "<br>" +
+        "Path 1: " +
+        data.tree1 +
+        " level " +
+        tower.path1 +
+        "<br>";
+
+
+    if (
+        tower.path1 >= 5
+    ) {
+
+        html +=
+            "MAX LEVEL";
+
+    }
+
+    else {
+
+        html +=
+            "<button onclick=\"upgradePath(1)\">" +
+            "Upgrade " +
+            data.tree1 +
+            " ($" +
+            cost1 +
+            ")" +
+            "</button>";
+
+    }
+
+
+    html +=
+        "<br><br>" +
+        "Path 2: " +
+        data.tree2 +
+        " level " +
+        tower.path2 +
+        "<br>";
+
+
+    if (
+        tower.path2 >= 5
+    ) {
+
+        html +=
+            "MAX LEVEL";
+
+    }
+
+    else {
+
+        html +=
+            "<button onclick=\"upgradePath(2)\">" +
+            "Upgrade " +
+            data.tree2 +
+            " ($" +
+            cost2 +
+            ")" +
+            "</button>";
+
+    }
+
+
+    /*
+        Show what the next upgrade actually does.
+    */
+
+    html +=
+        "<br><br>" +
+        "Next upgrades:";
+
+
+    if (
+        tower.path1 < 5
+    ) {
+
+        html +=
+            "<br>" +
+            data.tree1 +
+            ": " +
+            getUpgradeDescription(
+                tower,
+                1
+            );
+
+    }
+
+
+    if (
+        tower.path2 < 5
+    ) {
+
+        html +=
+            "<br>" +
+            data.tree2 +
+            ": " +
+            getUpgradeDescription(
+                tower,
+                2
+            );
+
+    }
+
+
+    document.getElementById(
+        "upgrades"
+    ).innerHTML =
+        html;
+
+}
+
+
+/* =========================================================
+   UPGRADE DESCRIPTIONS
+========================================================= */
+
+function getUpgradeDescription(
+    tower,
+    path
+) {
+
+    const level =
+        path === 1 ?
+        tower.path1 :
+        tower.path2;
+
+
+    if (
+        tower.type === "Arrow"
+    ) {
+
+        if (path === 1)
+            return "more damage (" +
+                (25 * (
+                    1 +
+                    (level + 1) *
+                    .35
+                )).toFixed(0) +
+                ")";
+
+        return "more range (" +
+            (
+                150 +
+                (level + 1) * 35
+            ) +
+            ")";
+
+    }
+
+
+    if (
+        tower.type === "Rapid"
+    ) {
+
+        if (path === 1)
+            return "faster firing";
+
+        return "more damage";
+
+    }
+
+
+    if (
+        tower.type === "Cannon"
+    ) {
+
+        if (path === 1)
+            return "larger explosion";
+
+        return "more damage";
+
+    }
+
+
+    if (
+        tower.type === "Sniper"
+    ) {
+
+        if (path === 1)
+            return "more damage";
+
+        return "more range";
+
+    }
+
+
+    if (
+        tower.type === "Ice"
+    ) {
+
+        if (path === 1)
+            return "stronger freezing";
+
+        return "more range";
+
+    }
+
+
+    if (
+        tower.type === "Wizard"
+    ) {
+
+        if (path === 1)
+            return "more magic damage";
+
+        return "more targets hit";
+
+    }
+
+
+    return "stronger tower";
+
+}
+
+
+/* =========================================================
+   ACTUALLY UPGRADE
+========================================================= */
+
+function upgradePath(path) {
 
     if (!selectedTower) {
         return;
@@ -549,55 +1045,121 @@ function upgradeSelected() {
     const tower =
         selectedTower;
 
-    const cost =
-        50 * tower.level;
+
+    const currentLevel =
+        path === 1 ?
+        tower.path1 :
+        tower.path2;
 
 
-    if (money < cost) {
+    if (
+        currentLevel >= 5
+    ) {
+
         return;
+
     }
 
 
-    if (tower.level >= 5) {
+    const cost =
+        upgradeCost(
+            currentLevel
+        );
+
+
+    if (
+        money <
+        cost
+    ) {
+
         return;
+
     }
 
 
     money -= cost;
 
-    tower.level++;
+
+    if (
+        path === 1
+    ) {
+
+        tower.path1++;
+
+    }
+
+    else {
+
+        tower.path2++;
+
+    }
 
 
-    tower.element.textContent =
-        towerTypes[
-            tower.type
-        ].name +
-        " " +
-        tower.level;
+    updateTowerText(
+        tower
+    );
 
+
+    showTowerInfo();
 
     updateUI();
 
 }
 
 
-/* -------------------------
+/* =========================================================
+   UPDATE TOWER TEXT
+========================================================= */
+
+function updateTowerText(
+    tower
+) {
+
+    const data =
+        towerTypes[
+            tower.type
+        ];
+
+
+    tower.element.textContent =
+        data.name +
+        " " +
+        (
+            tower.path1 +
+            tower.path2
+        );
+
+
+    tower.element.title =
+        data.name +
+        "\n" +
+        "Path 1: " +
+        tower.path1 +
+        "\n" +
+        "Path 2: " +
+        tower.path2;
+
+}
+
+
+/* =========================================================
    PATH
-------------------------- */
+========================================================= */
 
 function getPath(distance) {
 
     const first = 560;
-
     const vertical = 150;
 
 
-    if (distance < first) {
+    if (
+        distance <
+        first
+    ) {
 
         return {
 
             x: distance,
-
             y: 310
 
         };
@@ -607,7 +1169,8 @@ function getPath(distance) {
 
     if (
         distance <
-        first + vertical
+        first +
+        vertical
     ) {
 
         return {
@@ -643,14 +1206,13 @@ function getPath(distance) {
 }
 
 
-/* -------------------------
-   SPAWN
-------------------------- */
+/* =========================================================
+   SPAWN ENEMY
+========================================================= */
 
 function spawnEnemy() {
 
     let type;
-
 
     const r =
         Math.random();
@@ -658,7 +1220,7 @@ function spawnEnemy() {
 
     if (
         round >= 12 &&
-        Math.random() < 0.06
+        Math.random() < .06
     ) {
 
         type =
@@ -668,7 +1230,7 @@ function spawnEnemy() {
 
     else if (
         round >= 6 &&
-        r < 0.20
+        r < .20
     ) {
 
         type =
@@ -676,21 +1238,27 @@ function spawnEnemy() {
 
     }
 
-    else if (r < 0.40) {
+    else if (
+        r < .40
+    ) {
 
         type =
             enemyTypes[3];
 
     }
 
-    else if (r < 0.65) {
+    else if (
+        r < .65
+    ) {
 
         type =
             enemyTypes[2];
 
     }
 
-    else if (r < 0.85) {
+    else if (
+        r < .85
+    ) {
 
         type =
             enemyTypes[1];
@@ -711,7 +1279,8 @@ function spawnEnemy() {
 
 
     if (
-        type.name === "boss"
+        type.name ===
+        "boss"
     ) {
 
         hp +=
@@ -721,7 +1290,9 @@ function spawnEnemy() {
 
 
     const element =
-        document.createElement("span");
+        document.createElement(
+            "span"
+        );
 
 
     element.textContent =
@@ -745,7 +1316,8 @@ function spawnEnemy() {
 
 
     if (
-        type.name === "boss"
+        type.name ===
+        "boss"
     ) {
 
         element.style.fontSize =
@@ -754,7 +1326,9 @@ function spawnEnemy() {
     }
 
 
-    game.appendChild(element);
+    game.appendChild(
+        element
+    );
 
 
     enemies.push({
@@ -778,14 +1352,18 @@ function spawnEnemy() {
 }
 
 
-/* -------------------------
+/* =========================================================
    ROUND SYSTEM
-------------------------- */
+========================================================= */
 
 function startRound() {
 
-    if (roundRunning) {
+    if (
+        roundRunning
+    ) {
+
         return;
+
     }
 
 
@@ -801,7 +1379,8 @@ function startRound() {
         round % 5 === 0
     ) {
 
-        enemiesToSpawn += 5;
+        enemiesToSpawn +=
+            5;
 
     }
 
@@ -815,7 +1394,8 @@ function roundUpdate(dt) {
 
     if (!roundRunning) {
 
-        nextRoundTimer -= dt;
+        nextRoundTimer -=
+            dt;
 
 
         if (
@@ -832,7 +1412,8 @@ function roundUpdate(dt) {
     }
 
 
-    spawnTimer -= dt;
+    spawnTimer -=
+        dt;
 
 
     if (
@@ -846,9 +1427,9 @@ function roundUpdate(dt) {
 
         spawnTimer =
             Math.max(
-                0.15,
-                0.45 -
-                round * 0.005
+                .15,
+                .45 -
+                round * .005
             );
 
     }
@@ -876,9 +1457,9 @@ function roundUpdate(dt) {
 }
 
 
-/* -------------------------
+/* =========================================================
    TOWER TARGETING
-------------------------- */
+========================================================= */
 
 function towerUpdate(dt) {
 
@@ -886,13 +1467,12 @@ function towerUpdate(dt) {
         let tower of towers
     ) {
 
-        const data =
-            towerTypes[
-                tower.type
-            ];
+        const stats =
+            getStats(tower);
 
 
-        tower.cooldown -= dt;
+        tower.cooldown -=
+            dt;
 
 
         if (
@@ -922,21 +1502,18 @@ function towerUpdate(dt) {
 
             const distance =
                 Math.hypot(
-                    p.x - tower.x,
-                    p.y - tower.y
+                    p.x -
+                    tower.x,
+
+                    p.y -
+                    tower.y
                 );
 
 
             if (
                 distance <=
-                data.range
+                stats.range
             ) {
-
-                /*
-                    Prefer enemies
-                    furthest along
-                    the path.
-                */
 
                 if (
                     enemy.distance >
@@ -963,13 +1540,9 @@ function towerUpdate(dt) {
                 target
             );
 
+
             tower.cooldown =
-                data.reload /
-                (
-                    1 +
-                    (tower.level - 1)
-                    * 0.12
-                );
+                stats.reload;
 
         }
 
@@ -978,19 +1551,17 @@ function towerUpdate(dt) {
 }
 
 
-/* -------------------------
+/* =========================================================
    FIRE
-------------------------- */
+========================================================= */
 
 function fire(
     tower,
     target
 ) {
 
-    const data =
-        towerTypes[
-            tower.type
-        ];
+    const stats =
+        getStats(tower);
 
 
     const element =
@@ -1013,7 +1584,9 @@ function fire(
         "bold";
 
 
-    game.appendChild(element);
+    game.appendChild(
+        element
+    );
 
 
     bullets.push({
@@ -1025,18 +1598,21 @@ function fire(
         target: target,
 
         speed:
-            data.projectileSpeed,
+            towerTypes[
+                tower.type
+            ].projectileSpeed,
 
         damage:
-            data.damage *
-            (
-                1 +
-                (tower.level - 1)
-                * 0.25
-            ),
+            stats.damage,
 
-        special:
-            data.special,
+        splash:
+            stats.splash,
+
+        slow:
+            stats.slow,
+
+        pierce:
+            stats.pierce,
 
         element:
             element
@@ -1046,9 +1622,9 @@ function fire(
 }
 
 
-/* -------------------------
+/* =========================================================
    BULLETS
-------------------------- */
+========================================================= */
 
 function bulletUpdate(dt) {
 
@@ -1073,25 +1649,28 @@ function bulletUpdate(dt) {
 
             bullet.element.remove();
 
-            bullets.splice(i, 1);
+            bullets.splice(
+                i,
+                1
+            );
 
             continue;
 
         }
 
 
-        const targetPosition =
+        const p =
             getPath(
                 bullet.target.distance
             );
 
 
         const dx =
-            targetPosition.x -
+            p.x -
             bullet.x;
 
         const dy =
-            targetPosition.y -
+            p.y -
             bullet.y;
 
 
@@ -1103,11 +1682,13 @@ function bulletUpdate(dt) {
 
 
         const movement =
-            bullet.speed * dt;
+            bullet.speed *
+            dt;
 
 
         if (
-            distance <= movement
+            distance <=
+            movement
         ) {
 
             hit(
@@ -1117,7 +1698,10 @@ function bulletUpdate(dt) {
 
             bullet.element.remove();
 
-            bullets.splice(i, 1);
+            bullets.splice(
+                i,
+                1
+            );
 
         }
 
@@ -1135,10 +1719,12 @@ function bulletUpdate(dt) {
 
 
             bullet.element.style.left =
-                bullet.x + "px";
+                bullet.x +
+                "px";
 
             bullet.element.style.top =
-                bullet.y + "px";
+                bullet.y +
+                "px";
 
         }
 
@@ -1147,75 +1733,86 @@ function bulletUpdate(dt) {
 }
 
 
-/* -------------------------
+/* =========================================================
    HIT
-------------------------- */
+========================================================= */
 
 function hit(bullet) {
 
-    const enemy =
+    const target =
         bullet.target;
 
 
-    enemy.hp -=
+    target.hp -=
         bullet.damage;
 
 
     /*
-        Ice tower slows.
+        Slow
     */
 
     if (
-        bullet.special ===
-        "slow"
+        bullet.slow > 0
     ) {
 
-        enemy.slow = 2.5;
+        target.slow =
+            Math.max(
+                target.slow,
+                1.5 +
+                bullet.slow
+            );
 
     }
 
 
     /*
-        Cannon splash.
+        Splash
     */
 
     if (
-        bullet.special ===
-        "splash"
+        bullet.splash > 0
     ) {
 
         for (
-            let other of enemies
+            let enemy of enemies
         ) {
 
             if (
-                other === enemy
+                enemy ===
+                target
             ) {
+
                 continue;
+
             }
 
 
             const a =
                 getPath(
-                    enemy.distance
+                    target.distance
                 );
 
             const b =
                 getPath(
-                    other.distance
+                    enemy.distance
                 );
 
 
             if (
                 Math.hypot(
-                    a.x - b.x,
-                    a.y - b.y
-                ) < 65
+                    a.x -
+                    b.x,
+
+                    a.y -
+                    b.y
+                ) <
+                55 +
+                bullet.splash
             ) {
 
-                other.hp -=
+                enemy.hp -=
                     bullet.damage *
-                    0.45;
+                    .45;
 
             }
 
@@ -1225,55 +1822,64 @@ function hit(bullet) {
 
 
     /*
-        Wizard can pierce
-        several nearby enemies.
+        Wizard pierce
     */
 
     if (
-        bullet.special ===
-        "pierce"
+        bullet.pierce > 1
     ) {
 
         let hits = 0;
 
 
         for (
-            let other of enemies
+            let enemy of enemies
         ) {
 
             if (
-                other === enemy
+                enemy ===
+                target
             ) {
+
                 continue;
+
             }
 
 
-            if (hits >= 2) {
+            if (
+                hits >=
+                bullet.pierce - 1
+            ) {
+
                 break;
+
             }
 
 
             const a =
                 getPath(
-                    enemy.distance
+                    target.distance
                 );
 
             const b =
                 getPath(
-                    other.distance
+                    enemy.distance
                 );
 
 
             if (
                 Math.hypot(
-                    a.x - b.x,
-                    a.y - b.y
+                    a.x -
+                    b.x,
+
+                    a.y -
+                    b.y
                 ) < 50
             ) {
 
-                other.hp -=
+                enemy.hp -=
                     bullet.damage *
-                    0.5;
+                    .5;
 
                 hits++;
 
@@ -1289,9 +1895,9 @@ function hit(bullet) {
 }
 
 
-/* -------------------------
+/* =========================================================
    DEATHS
-------------------------- */
+========================================================= */
 
 function checkDeaths() {
 
@@ -1322,6 +1928,7 @@ function checkDeaths() {
 
             enemy.element.remove();
 
+
             enemies.splice(
                 i,
                 1
@@ -1337,9 +1944,9 @@ function checkDeaths() {
 }
 
 
-/* -------------------------
-   ENEMIES
-------------------------- */
+/* =========================================================
+   ENEMY MOVEMENT
+========================================================= */
 
 function enemyUpdate(dt) {
 
@@ -1364,15 +1971,18 @@ function enemyUpdate(dt) {
             enemy.slow > 0
         ) {
 
-            speed *= 0.45;
+            speed *=
+                .45;
 
-            enemy.slow -= dt;
+            enemy.slow -=
+                dt;
 
         }
 
 
         enemy.distance +=
-            speed * dt;
+            speed *
+            dt;
 
 
         const p =
@@ -1382,28 +1992,28 @@ function enemyUpdate(dt) {
 
 
         enemy.element.style.left =
-            p.x + "px";
+            p.x +
+            "px";
 
         enemy.element.style.top =
-            p.y + "px";
+            p.y +
+            "px";
 
 
         if (
             p.x >
-            game.clientWidth + 50
+            game.clientWidth +
+            50
         ) {
 
             enemy.element.remove();
+
 
             enemies.splice(
                 i,
                 1
             );
 
-
-            /*
-                Bosses cost more lives.
-            */
 
             if (
                 enemy.type.name ===
@@ -1439,9 +2049,9 @@ function enemyUpdate(dt) {
 }
 
 
-/* -------------------------
+/* =========================================================
    AUTOPLAY
-------------------------- */
+========================================================= */
 
 function toggleAuto() {
 
@@ -1457,12 +2067,6 @@ function toggleAuto() {
         "OFF";
 
 
-    /*
-        Turning autoplay on
-        starts a round if
-        nothing is happening.
-    */
-
     if (
         autoplay &&
         !roundRunning &&
@@ -1476,9 +2080,9 @@ function toggleAuto() {
 }
 
 
-/* -------------------------
+/* =========================================================
    GAME OVER
-------------------------- */
+========================================================= */
 
 function gameOver() {
 
@@ -1496,15 +2100,17 @@ function gameOver() {
 }
 
 
-/* -------------------------
-   GAME LOOP
-------------------------- */
+/* =========================================================
+   START
+========================================================= */
 
 function loop(time) {
 
     let dt =
-        (time - lastTime) /
-        1000;
+        (
+            time -
+            lastTime
+        ) / 1000;
 
 
     lastTime =
@@ -1514,7 +2120,7 @@ function loop(time) {
     dt =
         Math.min(
             dt,
-            0.05
+            .05
         );
 
 
@@ -1533,6 +2139,8 @@ function loop(time) {
 
 }
 
+
+showNoTowerSelected();
 
 updateUI();
 
