@@ -2,490 +2,800 @@
 <html>
 <head>
 <title>bullet</title>
-<style>
-body{background:#000;color:#fff;font-family:monospace;margin:0}
-#top{padding:5px;border-bottom:1px solid #fff}
-button{background:#000;color:#fff;border:1px solid #fff;font-family:monospace}
-#game{position:relative;width:900px;height:600px;margin:10px auto;border:1px solid #fff;overflow:hidden}
-#road{position:absolute;top:270px;left:0;width:900px;height:70px;border-top:1px solid #555;border-bottom:1px solid #555}
-#road2{position:absolute;left:540px;top:120px;width:70px;height:190px;border-left:1px solid #555;border-right:1px solid #555}
-#road3{position:absolute;left:540px;top:120px;width:360px;height:70px;border-top:1px solid #555;border-bottom:1px solid #555}
-
-.tower{
-    position:absolute;
-    color:cyan;
-    font-weight:bold;
-    cursor:pointer;
-    transform:translate(-50%,-50%);
-}
-
-.enemy{
-    position:absolute;
-    color:red;
-    font-weight:bold;
-    white-space:nowrap;
-    transform:translate(-50%,-50%);
-}
-
-.bullet{
-    position:absolute;
-    color:yellow;
-    font-size:10px;
-    white-space:nowrap;
-}
-
-.hp{
-    position:absolute;
-    width:35px;
-    height:3px;
-    background:#333;
-    top:18px;
-    left:50%;
-    transform:translateX(-50%);
-}
-
-.hp2{
-    height:100%;
-    background:#0f0;
-}
-
-#over{
-    display:none;
-    position:absolute;
-    inset:0;
-    background:#000;
-    color:#fff;
-    text-align:center;
-    padding-top:200px;
-    z-index:100;
-}
-
-#over button{
-    padding:5px 15px;
-}
-</style>
 </head>
 
 <body>
 
-<div id="top">
-money: <span id="money">100</span> |
-lives: <span id="lives">10</span> |
-wave: <span id="wave">1</span> |
-score: <span id="score">0</span>
-<button onclick="startWave()">start wave</button>
-<button onclick="speed()">speed: <span id="speed">1</span>x</button>
+<h2>bullet</h2>
+
+<div>
+Money: <span id="money">150</span>
+&nbsp;
+Lives: <span id="lives">20</span>
+&nbsp;
+Wave: <span id="wave">1</span>
+&nbsp;
+Score: <span id="score">0</span>
 </div>
 
-<div id="game">
+<br>
 
-<div id="road"></div>
-<div id="road2"></div>
-<div id="road3"></div>
+<button onclick="selectTower('basic')">Basic tower - $25</button>
+<button onclick="selectTower('fast')">Fast tower - $45</button>
+<button onclick="selectTower('strong')">Strong tower - $70</button>
+<button onclick="selectTower('sniper')">Sniper - $100</button>
+<button onclick="selectTower('slow')">Slow tower - $80</button>
 
-<div id="over">
-    <h2>game over</h2>
-    score: <span id="final">0</span><br><br>
-    <button onclick="restart()">restart</button>
+<p>Selected: <span id="selected">basic</span></p>
+
+<div id="game"
+     style="
+     position:relative;
+     width:900px;
+     height:600px;
+     border:1px solid black;
+     overflow:hidden;
+     ">
+
+    <!-- road -->
+    <div style="
+        position:absolute;
+        left:0;
+        top:270px;
+        width:600px;
+        height:80px;
+        border-top:1px solid black;
+        border-bottom:1px solid black;
+    "></div>
+
+    <div style="
+        position:absolute;
+        left:550px;
+        top:150px;
+        width:80px;
+        height:160px;
+        border-left:1px solid black;
+        border-right:1px solid black;
+    "></div>
+
+    <div style="
+        position:absolute;
+        left:550px;
+        top:120px;
+        width:350px;
+        height:80px;
+        border-top:1px solid black;
+        border-bottom:1px solid black;
+    "></div>
+
 </div>
 
+<p>
+Waves start automatically.
+Click somewhere outside the road to build a tower.
+</p>
+
+<div id="gameover" style="display:none;">
+    <h2>Game over</h2>
+    Score: <span id="finalscore"></span>
+    <br><br>
+    <button onclick="location.reload()">Restart</button>
 </div>
+
 
 <script>
 
-let money=100;
-let lives=10;
-let wave=1;
-let score=0;
+const game = document.getElementById("game");
 
-let enemies=[];
-let towers=[];
-let bullets=[];
+let money = 150;
+let lives = 20;
+let wave = 1;
+let score = 0;
 
-let spawning=false;
-let leftToSpawn=0;
-let spawnTimer=0;
+let enemies = [];
+let towers = [];
+let bullets = [];
 
-let gameSpeed=1;
-let last=performance.now();
+let selectedTower = "basic";
 
-const game=document.getElementById("game");
+let waveTimer = 2;
+let spawnTimer = 0;
+let enemiesLeft = 0;
 
-const moneyText=document.getElementById("money");
-const livesText=document.getElementById("lives");
-const waveText=document.getElementById("wave");
-const scoreText=document.getElementById("score");
-const speedText=document.getElementById("speed");
+let lastTime = performance.now();
 
-function ui(){
-    moneyText.textContent=money;
-    livesText.textContent=lives;
-    waveText.textContent=wave;
-    scoreText.textContent=score;
-}
 
-function path(d){
+/* TOWER TYPES */
 
-    let y=305;
-    let x=610;
+const towerTypes = {
 
-    if(d<x){
-        return {x:d,y:y};
+    basic: {
+        cost: 25,
+        range: 160,
+        damage: 20,
+        reload: 0.7,
+        bulletSpeed: 400,
+        effect: "normal"
+    },
+
+    fast: {
+        cost: 45,
+        range: 140,
+        damage: 10,
+        reload: 0.22,
+        bulletSpeed: 500,
+        effect: "normal"
+    },
+
+    strong: {
+        cost: 70,
+        range: 180,
+        damage: 55,
+        reload: 1.4,
+        bulletSpeed: 350,
+        effect: "normal"
+    },
+
+    sniper: {
+        cost: 100,
+        range: 400,
+        damage: 100,
+        reload: 2.2,
+        bulletSpeed: 800,
+        effect: "normal"
+    },
+
+    slow: {
+        cost: 80,
+        range: 150,
+        damage: 8,
+        reload: 0.8,
+        bulletSpeed: 350,
+        effect: "slow"
     }
 
-    d-=x;
+};
 
-    if(d<180){
-        return {x:x,y:y-d};
+
+/* ENEMY TYPES */
+
+const enemyTypes = [
+
+    {
+        name: "cat",
+        hp: 40,
+        speed: 70,
+        reward: 8
+    },
+
+    {
+        name: "dog",
+        hp: 80,
+        speed: 50,
+        reward: 12
+    },
+
+    {
+        name: "bird",
+        hp: 30,
+        speed: 110,
+        reward: 10
+    },
+
+    {
+        name: "mouse",
+        hp: 20,
+        speed: 145,
+        reward: 7
+    },
+
+    {
+        name: "dragon",
+        hp: 300,
+        speed: 25,
+        reward: 50
     }
 
-    d-=180;
+];
 
-    return {
-        x:x+d,
-        y:125
-    };
+
+/* SELECT TOWER */
+
+function selectTower(type) {
+
+    selectedTower = type;
+
+    document.getElementById("selected").textContent = type;
 }
 
-function onRoad(x,y){
 
-    if(y>260 && y<350) return true;
+/* ROAD */
 
-    if(x>500 && x<650 && y>100 && y<340) return true;
+function onRoad(x, y) {
 
-    if(y>90 && y<210 && x>500) return true;
+    if (
+        y >= 250 &&
+        y <= 370 &&
+        x < 610
+    ) {
+        return true;
+    }
+
+    if (
+        x >= 520 &&
+        x <= 650 &&
+        y >= 100 &&
+        y <= 350
+    ) {
+        return true;
+    }
+
+    if (
+        y >= 100 &&
+        y <= 220 &&
+        x >= 520
+    ) {
+        return true;
+    }
 
     return false;
 }
 
-game.onclick=function(e){
 
-    if(e.target!==game &&
-       !e.target.classList.contains("road")) return;
+/* BUILD TOWERS */
 
-    let r=game.getBoundingClientRect();
+game.addEventListener("click", function(event) {
 
-    let x=e.clientX-r.left;
-    let y=e.clientY-r.top;
+    const rect = game.getBoundingClientRect();
 
-    if(money<25) return;
-    if(onRoad(x,y)) return;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
 
-    for(let t of towers){
+    const type = towerTypes[selectedTower];
 
-        let dx=t.x-x;
-        let dy=t.y-y;
-
-        if(Math.hypot(dx,dy)<40) return;
+    if (money < type.cost) {
+        return;
     }
 
-    money-=25;
+    if (onRoad(x, y)) {
+        return;
+    }
 
-    let el=document.createElement("div");
+    for (let tower of towers) {
 
-    el.className="tower";
-    el.textContent="T";
+        if (
+            Math.hypot(
+                tower.x - x,
+                tower.y - y
+            ) < 35
+        ) {
+            return;
+        }
+    }
 
-    el.style.left=x+"px";
-    el.style.top=y+"px";
+    money -= type.cost;
 
-    game.appendChild(el);
+    const element = document.createElement("span");
+
+    element.textContent = "tower";
+
+    element.style.position = "absolute";
+    element.style.left = x + "px";
+    element.style.top = y + "px";
+    element.style.transform = "translate(-50%,-50%)";
+    element.style.fontWeight = "bold";
+
+    game.appendChild(element);
 
     towers.push({
-        x:x,
-        y:y,
-        el:el,
-        cooldown:0,
-        range:180,
-        fire:.65,
-        damage:20
+
+        x: x,
+        y: y,
+
+        type: selectedTower,
+
+        cooldown: 0,
+
+        element: element
+
     });
 
-    ui();
-};
+    updateUI();
 
-let types=[
-    {name:"cat",hp:35,speed:75,reward:8},
-    {name:"dog",hp:60,speed:50,reward:12},
-    {name:"bird",hp:25,speed:110,reward:10},
-    {name:"dragon",hp:180,speed:30,reward:30}
-];
+});
 
-function spawn(){
+
+/* PATH */
+
+function getPath(distance) {
+
+    const first = 560;
+    const vertical = 150;
+
+    if (distance < first) {
+
+        return {
+            x: distance,
+            y: 310
+        };
+
+    }
+
+    if (distance < first + vertical) {
+
+        return {
+            x: 560,
+            y: 310 - (distance - first)
+        };
+
+    }
+
+    return {
+
+        x: 560 + (distance - first - vertical),
+
+        y: 160
+
+    };
+
+}
+
+
+/* SPAWN ENEMY */
+
+function spawnEnemy() {
 
     let type;
 
-    if(wave>=5 && Math.random()<.15){
-        type=types[3];
-    }else if(Math.random()<.3){
-        type=types[2];
-    }else if(Math.random()<.5){
-        type=types[1];
-    }else{
-        type=types[0];
+    let r = Math.random();
+
+    if (wave >= 8 && r < 0.12) {
+
+        type = enemyTypes[4];
+
+    } else if (r < 0.30) {
+
+        type = enemyTypes[3];
+
+    } else if (r < 0.55) {
+
+        type = enemyTypes[2];
+
+    } else if (r < 0.80) {
+
+        type = enemyTypes[1];
+
+    } else {
+
+        type = enemyTypes[0];
+
     }
 
-    let el=document.createElement("div");
+    let hp =
+        type.hp +
+        wave * 8;
 
-    el.className="enemy";
-    el.textContent=type.name;
+    const element =
+        document.createElement("span");
 
-    if(type.name==="dragon"){
-        el.style.fontSize="18px";
-    }
+    element.textContent = type.name;
 
-    game.appendChild(el);
+    element.style.position = "absolute";
+    element.style.color = "red";
+    element.style.fontWeight = "bold";
+    element.style.transform =
+        "translate(-50%,-50%)";
+    element.style.whiteSpace = "nowrap";
 
-    let hp=type.hp+wave*5;
-
-    el.innerHTML=
-        type.name+
-        '<div class="hp"><div class="hp2"></div></div>';
+    game.appendChild(element);
 
     enemies.push({
-        type:type,
-        hp:hp,
-        max:hp,
-        d:0,
-        el:el
+
+        type: type,
+
+        hp: hp,
+
+        maxHp: hp,
+
+        distance: 0,
+
+        speed: type.speed,
+
+        slow: 0,
+
+        element: element
+
     });
+
 }
 
-function startWave(){
 
-    if(spawning) return;
+/* AUTOMATIC WAVES */
 
-    spawning=true;
-    leftToSpawn=5+wave*2;
-    spawnTimer=0;
-}
+function waveUpdate(dt) {
 
-function updateWave(dt){
+    if (enemiesLeft > 0) {
 
-    if(!spawning) return;
+        spawnTimer -= dt;
 
-    spawnTimer-=dt;
+        if (spawnTimer <= 0) {
 
-    if(leftToSpawn>0 && spawnTimer<=0){
+            spawnEnemy();
 
-        spawn();
+            enemiesLeft--;
 
-        leftToSpawn--;
-        spawnTimer=.35;
-    }
+            spawnTimer = 0.35;
 
-    if(leftToSpawn===0 && enemies.length===0){
-
-        spawning=false;
-
-        money+=20+wave*3;
-
-        wave++;
-
-        ui();
-    }
-}
-
-function towerUpdate(dt){
-
-    for(let t of towers){
-
-        t.cooldown-=dt;
-
-        if(t.cooldown>0) continue;
-
-        let target=null;
-        let best=Infinity;
-
-        for(let e of enemies){
-
-            let p=path(e.d);
-
-            let dis=Math.hypot(
-                p.x-t.x,
-                p.y-t.y
-            );
-
-            if(dis<t.range && dis<best){
-
-                target=e;
-                best=dis;
-            }
         }
 
-        if(target){
-
-            shoot(t,target);
-
-            t.cooldown=t.fire;
-        }
+        return;
     }
-}
 
-function shoot(t,e){
+    if (enemies.length === 0) {
 
-    let el=document.createElement("div");
+        waveTimer -= dt;
 
-    el.className="bullet";
-    el.textContent="bullet";
+        if (waveTimer <= 0) {
 
-    game.appendChild(el);
+            wave++;
 
-    bullets.push({
-        x:t.x,
-        y:t.y,
-        target:e,
-        speed:450,
-        damage:t.damage,
-        el:el
-    });
-}
+            enemiesLeft =
+                5 + wave * 2;
 
-function bulletUpdate(dt){
+            spawnTimer = 0;
 
-    for(let i=bullets.length-1;i>=0;i--){
+            waveTimer = 3;
 
-        let b=bullets[i];
+            money += 15 + wave * 2;
 
-        if(!enemies.includes(b.target)){
+            updateUI();
 
-            b.el.remove();
-            bullets.splice(i,1);
-            continue;
         }
 
-        let p=path(b.target.d);
+    }
 
-        let dx=p.x-b.x;
-        let dy=p.y-b.y;
+}
 
-        let dis=Math.hypot(dx,dy);
-        let move=b.speed*dt;
 
-        if(dis<=move){
+/* MOVE ENEMIES */
 
-            damage(b.target,b.damage);
+function updateEnemies(dt) {
 
-            b.el.remove();
-            bullets.splice(i,1);
+    for (
+        let i = enemies.length - 1;
+        i >= 0;
+        i--
+    ) {
 
-        }else{
+        const enemy = enemies[i];
 
-            b.x+=dx/dis*move;
-            b.y+=dy/dis*move;
+        let speed = enemy.speed;
 
-            b.el.style.left=b.x+"px";
-            b.el.style.top=b.y+"px";
+        if (enemy.slow > 0) {
+
+            speed *= 0.45;
+
+            enemy.slow -= dt;
+
         }
-    }
-}
 
-function damage(e,n){
+        enemy.distance +=
+            speed * dt;
 
-    e.hp-=n;
+        const position =
+            getPath(enemy.distance);
 
-    e.el.querySelector(".hp2").style.width=
-        Math.max(0,e.hp/e.max*100)+"%";
+        enemy.element.style.left =
+            position.x + "px";
 
-    if(e.hp<=0){
+        enemy.element.style.top =
+            position.y + "px";
 
-        money+=e.type.reward;
-        score+=e.type.reward*10;
+        if (
+            position.x >
+            game.clientWidth + 50
+        ) {
 
-        e.el.remove();
+            enemy.element.remove();
 
-        let i=enemies.indexOf(e);
-
-        if(i>=0) enemies.splice(i,1);
-
-        ui();
-    }
-}
-
-function enemyUpdate(dt){
-
-    for(let i=enemies.length-1;i>=0;i--){
-
-        let e=enemies[i];
-
-        e.d+=e.type.speed*dt;
-
-        let p=path(e.d);
-
-        e.el.style.left=p.x+"px";
-        e.el.style.top=p.y+"px";
-
-        if(p.x>game.clientWidth+50){
-
-            e.el.remove();
-            enemies.splice(i,1);
+            enemies.splice(i, 1);
 
             lives--;
 
-            ui();
+            updateUI();
 
-            if(lives<=0){
-                end();
+            if (lives <= 0) {
+
+                endGame();
+
             }
+
         }
+
     }
+
 }
 
-function end(){
 
-    document.getElementById("final").textContent=score;
-    document.getElementById("over").style.display="block";
+/* TOWERS SHOOT */
+
+function updateTowers(dt) {
+
+    for (let tower of towers) {
+
+        const data =
+            towerTypes[tower.type];
+
+        tower.cooldown -= dt;
+
+        if (tower.cooldown > 0) {
+            continue;
+        }
+
+        let target = null;
+
+        let bestDistance = Infinity;
+
+        for (let enemy of enemies) {
+
+            const position =
+                getPath(enemy.distance);
+
+            const distance =
+                Math.hypot(
+                    position.x - tower.x,
+                    position.y - tower.y
+                );
+
+            if (
+                distance <= data.range &&
+                distance < bestDistance
+            ) {
+
+                target = enemy;
+
+                bestDistance =
+                    distance;
+
+            }
+
+        }
+
+        if (target) {
+
+            fireBullet(
+                tower,
+                target
+            );
+
+            tower.cooldown =
+                data.reload;
+
+        }
+
+    }
+
 }
 
-function speed(){
 
-    gameSpeed=gameSpeed===1?2:1;
+/* BULLETS */
 
-    speedText.textContent=gameSpeed;
+function fireBullet(tower, target) {
+
+    const data =
+        towerTypes[tower.type];
+
+    const element =
+        document.createElement("span");
+
+    element.textContent = "bullet";
+
+    element.style.position = "absolute";
+    element.style.fontSize = "11px";
+    element.style.fontWeight = "bold";
+
+    game.appendChild(element);
+
+    bullets.push({
+
+        x: tower.x,
+
+        y: tower.y,
+
+        target: target,
+
+        speed: data.bulletSpeed,
+
+        damage: data.damage,
+
+        effect: data.effect,
+
+        element: element
+
+    });
+
 }
 
-function restart(){
 
-    for(let t of towers)t.el.remove();
-    for(let e of enemies)e.el.remove();
-    for(let b of bullets)b.el.remove();
+/* UPDATE BULLETS */
 
-    towers=[];
-    enemies=[];
-    bullets=[];
+function updateBullets(dt) {
 
-    money=100;
-    lives=10;
-    wave=1;
-    score=0;
+    for (
+        let i = bullets.length - 1;
+        i >= 0;
+        i--
+    ) {
 
-    spawning=false;
-    gameSpeed=1;
+        const bullet = bullets[i];
 
-    speedText.textContent=1;
+        if (!enemies.includes(bullet.target)) {
 
-    document.getElementById("over").style.display="none";
+            bullet.element.remove();
 
-    ui();
+            bullets.splice(i, 1);
+
+            continue;
+
+        }
+
+        const targetPosition =
+            getPath(
+                bullet.target.distance
+            );
+
+        const dx =
+            targetPosition.x -
+            bullet.x;
+
+        const dy =
+            targetPosition.y -
+            bullet.y;
+
+        const distance =
+            Math.hypot(dx, dy);
+
+        const movement =
+            bullet.speed * dt;
+
+        if (distance <= movement) {
+
+            damageEnemy(
+                bullet.target,
+                bullet.damage,
+                bullet.effect
+            );
+
+            bullet.element.remove();
+
+            bullets.splice(i, 1);
+
+        } else {
+
+            bullet.x +=
+                dx / distance * movement;
+
+            bullet.y +=
+                dy / distance * movement;
+
+            bullet.element.style.left =
+                bullet.x + "px";
+
+            bullet.element.style.top =
+                bullet.y + "px";
+
+        }
+
+    }
+
 }
 
-function loop(now){
 
-    let dt=(now-last)/1000;
-    last=now;
+/* DAMAGE */
 
-    dt=Math.min(dt,.05);
-    dt*=gameSpeed;
+function damageEnemy(
+    enemy,
+    damage,
+    effect
+) {
 
-    updateWave(dt);
-    enemyUpdate(dt);
-    towerUpdate(dt);
-    bulletUpdate(dt);
+    enemy.hp -= damage;
+
+    if (effect === "slow") {
+
+        enemy.slow = 2;
+
+    }
+
+    if (enemy.hp <= 0) {
+
+        money +=
+            enemy.type.reward;
+
+        score +=
+            enemy.type.reward * 10;
+
+        enemy.element.remove();
+
+        const index =
+            enemies.indexOf(enemy);
+
+        if (index !== -1) {
+
+            enemies.splice(
+                index,
+                1
+            );
+
+        }
+
+        updateUI();
+
+    }
+
+}
+
+
+/* UI */
+
+function updateUI() {
+
+    document.getElementById("money")
+        .textContent = money;
+
+    document.getElementById("lives")
+        .textContent = lives;
+
+    document.getElementById("wave")
+        .textContent = wave;
+
+    document.getElementById("score")
+        .textContent = score;
+
+}
+
+
+/* GAME OVER */
+
+function endGame() {
+
+    document.getElementById("finalscore")
+        .textContent = score;
+
+    document.getElementById("gameover")
+        .style.display = "block";
+
+}
+
+
+/* MAIN LOOP */
+
+function loop(time) {
+
+    let dt =
+        (time - lastTime) / 1000;
+
+    lastTime = time;
+
+    dt = Math.min(dt, 0.05);
+
+    waveUpdate(dt);
+
+    updateEnemies(dt);
+
+    updateTowers(dt);
+
+    updateBullets(dt);
 
     requestAnimationFrame(loop);
+
 }
 
-ui();
+
+/* START */
+
+updateUI();
+
 requestAnimationFrame(loop);
 
 </script>
