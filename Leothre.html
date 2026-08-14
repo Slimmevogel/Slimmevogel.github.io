@@ -121,10 +121,6 @@ button, input {
     }
 }
 
-.specialTower {
-    text-decoration: underline;
-}
-
 #towerButtons {
     max-width: 1500px;
     line-height: 30px;
@@ -144,7 +140,6 @@ button, input {
     z-index: 100;
     display: none;
 }
-
 </style>
 </head>
 
@@ -385,9 +380,6 @@ insane: {
 
 };
 
-let chosenDifficulty = "normal";
-let chosenMap = 0;
-
 
 /* =========================================================
    MAPS
@@ -530,8 +522,6 @@ water:[
 
 /* =========================================================
    TOWER DEFINITIONS
-
-   third path = special ability
 ========================================================= */
 
 const towerTypes = {
@@ -777,34 +767,36 @@ Torpedo:{
    GAME VARIABLES
 ========================================================= */
 
-let money = 250;
-let lives = 45;
-let round = 1;
-let score = 0;
+let chosenDifficulty="normal";
+let chosenMap=0;
 
-let enemies = [];
-let towers = [];
-let bullets = [];
-let effects = [];
+let money=250;
+let lives=45;
+let round=1;
+let score=0;
 
-let selectedType = "Arrow";
-let selectedTower = null;
+let enemies=[];
+let towers=[];
+let bullets=[];
 
-let paused = false;
-let autoplay = false;
-let roundRunning = false;
+let selectedType="Arrow";
+let selectedTower=null;
 
-let enemiesToSpawn = 0;
-let spawnTimer = 0;
-let nextRoundTimer = 3;
+let paused=false;
+let autoplay=false;
+let roundRunning=false;
 
-let gameSpeed = 1;
+let enemiesToSpawn=0;
+let spawnTimer=0;
+let nextRoundTimer=3;
 
-let towerCounts = {};
+let gameSpeed=1;
 
-let lastTime = performance.now();
+let towerCounts={};
 
-const game = document.getElementById("game");
+let lastTime=performance.now();
+
+const game=document.getElementById("game");
 
 
 /* =========================================================
@@ -812,14 +804,23 @@ const game = document.getElementById("game");
 ========================================================= */
 
 function setDifficulty(value) {
+
     chosenDifficulty=value;
-    document.getElementById("difficultyText").textContent =
+
+    document.getElementById(
+        "difficultyText"
+    ).textContent=
         difficulties[value].name;
 }
 
+
 function setMap(value) {
+
     chosenMap=value;
-    document.getElementById("mapText").textContent =
+
+    document.getElementById(
+        "mapText"
+    ).textContent=
         maps[value].name;
 }
 
@@ -829,8 +830,12 @@ function setMap(value) {
 ========================================================= */
 
 function setGameSpeed(value) {
+
     gameSpeed=parseInt(value);
-    document.getElementById("speedText").textContent =
+
+    document.getElementById(
+        "speedText"
+    ).textContent=
         gameSpeed+"x";
 }
 
@@ -852,7 +857,6 @@ function startGame() {
     enemies=[];
     towers=[];
     bullets=[];
-    effects=[];
 
     selectedTower=null;
 
@@ -872,31 +876,52 @@ function startGame() {
         towerCounts[type]=0;
     }
 
-    document.getElementById("speedSlider").value=1;
-    document.getElementById("speedText").textContent="1x";
+    document.getElementById(
+        "speedSlider"
+    ).value=1;
 
-    document.getElementById("menu").style.display="none";
-    document.getElementById("gameScreen").style.display="block";
+    document.getElementById(
+        "speedText"
+    ).textContent="1x";
 
-    document.getElementById("gameOver").style.display="none";
+    document.getElementById(
+        "menu"
+    ).style.display="none";
 
-    document.getElementById("currentDifficulty").textContent =
-        d.name;
+    document.getElementById(
+        "gameScreen"
+    ).style.display="block";
 
-    document.getElementById("currentMap").textContent =
-        maps[chosenMap].name;
+    document.getElementById(
+        "gameOver"
+    ).style.display="none";
 
-    document.getElementById("auto").textContent="OFF";
+    document.getElementById(
+        "currentDifficulty"
+    ).textContent=d.name;
 
-    document.getElementById("pauseButton").textContent="Pause";
+    document.getElementById(
+        "currentMap"
+    ).textContent=maps[chosenMap].name;
+
+    document.getElementById(
+        "auto"
+    ).textContent="OFF";
+
+    document.getElementById(
+        "pauseButton"
+    ).textContent="Pause";
 
     buildMap();
 
     selectedType="Arrow";
 
-    document.getElementById("selected").textContent="None";
+    document.getElementById(
+        "selected"
+    ).textContent="None";
 
     hideCircles();
+
     showNoTowerSelected();
 
     updateUI();
@@ -913,7 +938,6 @@ function buildMap() {
 
     const map=maps[chosenMap];
 
-    /* Water */
 
     for(const water of map.water) {
 
@@ -932,9 +956,8 @@ function buildMap() {
     }
 
 
-    /* Road */
-
     const path=map.path;
+
 
     for(let i=0;i<path.length-1;i++) {
 
@@ -945,20 +968,37 @@ function buildMap() {
 
         road.className="road";
 
-        if(Math.abs(b.x-a.x)>Math.abs(b.y-a.y)) {
 
-            road.style.left=Math.min(a.x,b.x)+"px";
-            road.style.top=(a.y-28)+"px";
-            road.style.width=Math.abs(b.x-a.x)+"px";
+        if(
+            Math.abs(b.x-a.x)>
+            Math.abs(b.y-a.y)
+        ) {
+
+            road.style.left=
+                Math.min(a.x,b.x)+"px";
+
+            road.style.top=
+                (a.y-28)+"px";
+
+            road.style.width=
+                Math.abs(b.x-a.x)+"px";
+
             road.style.height="56px";
 
         } else {
 
-            road.style.left=(a.x-28)+"px";
-            road.style.top=Math.min(a.y,b.y)+"px";
+            road.style.left=
+                (a.x-28)+"px";
+
+            road.style.top=
+                Math.min(a.y,b.y)+"px";
+
             road.style.width="56px";
-            road.style.height=Math.abs(b.y-a.y)+"px";
+
+            road.style.height=
+                Math.abs(b.y-a.y)+"px";
         }
+
 
         game.appendChild(road);
     }
@@ -969,8 +1009,12 @@ function buildMap() {
     start.textContent="start";
 
     start.style.position="absolute";
+
     start.style.left="5px";
-    start.style.top=(path[0].y-45)+"px";
+
+    start.style.top=
+        (path[0].y-45)+"px";
+
     start.style.zIndex="5";
 
     game.appendChild(start);
@@ -981,14 +1025,17 @@ function buildMap() {
     end.textContent="end";
 
     end.style.position="absolute";
-    end.style.left=(path[path.length-1].x-20)+"px";
-    end.style.top=(path[path.length-1].y-45)+"px";
+
+    end.style.left=
+        (path[path.length-1].x-20)+"px";
+
+    end.style.top=
+        (path[path.length-1].y-45)+"px";
+
     end.style.zIndex="5";
 
     game.appendChild(end);
 
-
-    /* Recreate circles because innerHTML was cleared */
 
     const range=document.createElement("div");
 
@@ -1020,9 +1067,7 @@ function buildMap() {
 
 function isWater(x,y) {
 
-    const water=maps[chosenMap].water;
-
-    for(const w of water) {
+    for(const w of maps[chosenMap].water) {
 
         if(
             x>=w.x &&
@@ -1042,29 +1087,45 @@ function isWater(x,y) {
    ROAD TEST
 ========================================================= */
 
-function distanceToSegment(px,py,ax,ay,bx,by) {
+function distanceToSegment(
+    px,py,
+    ax,ay,
+    bx,by
+) {
 
     const dx=bx-ax;
     const dy=by-ay;
 
     if(dx===0 && dy===0) {
-        return Math.hypot(px-ax,py-ay);
+        return Math.hypot(
+            px-ax,
+            py-ay
+        );
     }
+
 
     const t=Math.max(
         0,
         Math.min(
             1,
-            ((px-ax)*dx+(py-ay)*dy) /
+            (
+                (px-ax)*dx+
+                (py-ay)*dy
+            )/
             (dx*dx+dy*dy)
         )
     );
 
+
     const x=ax+t*dx;
     const y=ay+t*dy;
 
-    return Math.hypot(px-x,py-y);
+    return Math.hypot(
+        px-x,
+        py-y
+    );
 }
+
 
 function onRoad(x,y) {
 
@@ -1096,16 +1157,25 @@ function onRoad(x,y) {
 
 function showCircles(tower,x,y) {
 
-    const rangeCircle=document.getElementById("rangeCircle");
-    const hitboxCircle=document.getElementById("hitboxCircle");
+    const rangeCircle=
+        document.getElementById(
+            "rangeCircle"
+        );
+
+    const hitboxCircle=
+        document.getElementById(
+            "hitboxCircle"
+        );
+
 
     if(!rangeCircle || !hitboxCircle) {
         return;
     }
 
-    let range;
 
+    let range;
     let hitbox;
+
 
     if(tower) {
 
@@ -1125,36 +1195,60 @@ function showCircles(tower,x,y) {
 
     if(range>0) {
 
-        rangeCircle.style.width=(range*2)+"px";
-        rangeCircle.style.height=(range*2)+"px";
+        rangeCircle.style.width=
+            (range*2)+"px";
 
-        rangeCircle.style.left=(x-range)+"px";
-        rangeCircle.style.top=(y-range)+"px";
+        rangeCircle.style.height=
+            (range*2)+"px";
 
-        rangeCircle.style.display="block";
+        rangeCircle.style.left=
+            (x-range)+"px";
+
+        rangeCircle.style.top=
+            (y-range)+"px";
+
+        rangeCircle.style.display=
+            "block";
 
     } else {
 
-        rangeCircle.style.display="none";
+        rangeCircle.style.display=
+            "none";
     }
 
 
-    hitboxCircle.style.width=(hitbox*2)+"px";
-    hitboxCircle.style.height=(hitbox*2)+"px";
+    hitboxCircle.style.width=
+        (hitbox*2)+"px";
 
-    hitboxCircle.style.left=(x-hitbox)+"px";
-    hitboxCircle.style.top=(y-hitbox)+"px";
+    hitboxCircle.style.height=
+        (hitbox*2)+"px";
 
-    hitboxCircle.style.display="block";
+    hitboxCircle.style.left=
+        (x-hitbox)+"px";
+
+    hitboxCircle.style.top=
+        (y-hitbox)+"px";
+
+    hitboxCircle.style.display=
+        "block";
 }
 
 
 function hideCircles() {
 
-    const r=document.getElementById("rangeCircle");
-    const h=document.getElementById("hitboxCircle");
+    const r=
+        document.getElementById(
+            "rangeCircle"
+        );
+
+    const h=
+        document.getElementById(
+            "hitboxCircle"
+        );
+
 
     if(r) r.style.display="none";
+
     if(h) h.style.display="none";
 }
 
@@ -1166,9 +1260,12 @@ function hideCircles() {
 function selectTowerType(type) {
 
     selectedType=type;
+
     selectedTower=null;
 
-    document.getElementById("selected").textContent =
+    document.getElementById(
+        "selected"
+    ).textContent=
         towerTypes[type].name;
 
     showNoTowerSelected();
@@ -1185,198 +1282,255 @@ function selectTowerType(type) {
    MOUSE PREVIEW
 ========================================================= */
 
-game.addEventListener("mousemove",function(event) {
+game.addEventListener(
+    "mousemove",
+    function(event) {
 
-    if(paused) return;
+        if(paused) {
+            return;
+        }
 
-    if(selectedTower) {
+
+        if(selectedTower) {
+
+            showCircles(
+                selectedTower,
+                selectedTower.x,
+                selectedTower.y
+            );
+
+            return;
+        }
+
+
+        const rect=
+            game.getBoundingClientRect();
+
+
+        const x=
+            event.clientX-
+            rect.left;
+
+        const y=
+            event.clientY-
+            rect.top;
+
 
         showCircles(
-            selectedTower,
-            selectedTower.x,
-            selectedTower.y
+            null,
+            x,
+            y
         );
-
-        return;
     }
-
-    const rect=game.getBoundingClientRect();
-
-    const x=event.clientX-rect.left;
-    const y=event.clientY-rect.top;
-
-    showCircles(null,x,y);
-});
+);
 
 
 /* =========================================================
    PLACE TOWER
 ========================================================= */
 
-game.addEventListener("click",function(event) {
+game.addEventListener(
+    "click",
+    function(event) {
 
-    if(paused) return;
-
-
-    if(event.target.classList.contains("tower")) {
-
-        const tower=towers.find(
-            t=>t.element===event.target
-        );
-
-        if(tower) {
-
-            selectedTower=tower;
-            selectedType=tower.type;
-
-            document.getElementById("selected").textContent =
-                towerTypes[tower.type].name;
-
-            showTowerInfo();
-
-            showCircles(
-                tower,
-                tower.x,
-                tower.y
-            );
-        }
-
-        return;
-    }
-
-
-    const rect=game.getBoundingClientRect();
-
-    const x=event.clientX-rect.left;
-    const y=event.clientY-rect.top;
-
-    const data=towerTypes[selectedType];
-
-
-    if(towerCounts[selectedType]>=20) {
-
-        alert(
-            "Maximum 20 "+data.name+" towers."
-        );
-
-        return;
-    }
-
-
-    if(money<data.cost) {
-        return;
-    }
-
-
-    const water=isWater(x,y);
-
-
-    if(data.water && !water) {
-
-        alert(
-            data.name+
-            " can only be placed in water."
-        );
-
-        return;
-    }
-
-
-    if(data.land && water) {
-
-        alert(
-            data.name+
-            " cannot be placed in water."
-        );
-
-        return;
-    }
-
-
-    if(onRoad(x,y)) {
-        return;
-    }
-
-
-    for(const tower of towers) {
-
-        if(
-            Math.hypot(
-                tower.x-x,
-                tower.y-y
-            )<40
-        ) {
+        if(paused) {
             return;
         }
+
+
+        if(
+            event.target.classList
+                .contains("tower")
+        ) {
+
+            const tower=
+                towers.find(
+                    t=>
+                        t.element===
+                        event.target
+                );
+
+
+            if(tower) {
+
+                selectedTower=tower;
+
+                selectedType=tower.type;
+
+                document.getElementById(
+                    "selected"
+                ).textContent=
+                    towerTypes[
+                        tower.type
+                    ].name;
+
+                showTowerInfo();
+
+                showCircles(
+                    tower,
+                    tower.x,
+                    tower.y
+                );
+            }
+
+            return;
+        }
+
+
+        const rect=
+            game.getBoundingClientRect();
+
+
+        const x=
+            event.clientX-
+            rect.left;
+
+        const y=
+            event.clientY-
+            rect.top;
+
+
+        const data=
+            towerTypes[selectedType];
+
+
+        if(
+            towerCounts[selectedType]>=20
+        ) {
+
+            alert(
+                "Maximum 20 "+
+                data.name+
+                " towers."
+            );
+
+            return;
+        }
+
+
+        if(money<data.cost) {
+            return;
+        }
+
+
+        const water=isWater(x,y);
+
+
+        if(data.water && !water) {
+
+            alert(
+                data.name+
+                " can only be placed in water."
+            );
+
+            return;
+        }
+
+
+        if(data.land && water) {
+
+            alert(
+                data.name+
+                " cannot be placed in water."
+            );
+
+            return;
+        }
+
+
+        if(onRoad(x,y)) {
+            return;
+        }
+
+
+        for(const tower of towers) {
+
+            if(
+                Math.hypot(
+                    tower.x-x,
+                    tower.y-y
+                )<40
+            ) {
+                return;
+            }
+        }
+
+
+        money-=data.cost;
+
+
+        const element=
+            document.createElement(
+                "span"
+            );
+
+
+        element.className="tower";
+
+        element.textContent=data.name;
+
+        element.style.left=x+"px";
+
+        element.style.top=y+"px";
+
+
+        const tower={
+
+            x:x,
+            y:y,
+
+            type:selectedType,
+
+            element:element,
+
+            cooldown:0,
+
+            farmTimer:5,
+
+            path1:0,
+            path2:0,
+            path3:0,
+
+            spent:data.cost,
+
+            abilityCooldown:0,
+
+            overdrive:0
+        };
+
+
+        if(
+            selectedType==="Boat" ||
+            selectedType==="Harpoon" ||
+            selectedType==="Torpedo"
+        ) {
+
+            element.textContent=
+                data.name+
+                " water";
+        }
+
+
+        game.appendChild(element);
+
+        towers.push(tower);
+
+        towerCounts[selectedType]++;
+
+
+        selectedTower=tower;
+
+        showTowerInfo();
+
+        showCircles(
+            tower,
+            x,
+            y
+        );
+
+        updateUI();
     }
-
-
-    money-=data.cost;
-
-
-    const element=document.createElement("span");
-
-    element.className="tower";
-
-    element.textContent=data.name;
-
-    element.style.left=x+"px";
-    element.style.top=y+"px";
-
-
-    const tower={
-
-        x:x,
-        y:y,
-
-        type:selectedType,
-
-        element:element,
-
-        cooldown:0,
-
-        farmTimer:5,
-
-        path1:0,
-        path2:0,
-        path3:0,
-
-        spent:data.cost,
-
-        abilityTimer:0,
-        abilityCooldown:0
-    };
-
-
-    if(
-        selectedType==="Boat" ||
-        selectedType==="Harpoon" ||
-        selectedType==="Torpedo"
-    ) {
-        element.textContent=
-            data.name+
-            " water";
-    }
-
-
-    game.appendChild(element);
-
-    towers.push(tower);
-
-    towerCounts[selectedType]++;
-
-    selectedTower=tower;
-
-    showTowerInfo();
-
-    showCircles(
-        tower,
-        x,
-        y
-    );
-
-    updateUI();
-});
+);
 
 
 /* =========================================================
@@ -1388,36 +1542,39 @@ function getStats(tower) {
     const data=towerTypes[tower.type];
 
     let range=data.range;
+
     let hitbox=data.hitbox;
+
     let damage=data.damage;
+
     let reload=data.reload;
 
     let splash=0;
+
     let slow=0;
+
     let pierce=1;
 
 
-    /* PATH 1 */
-
-    damage *= 1 + tower.path1*.30;
-
-
-    /* PATH 2 */
-
-    range += tower.path2*35;
+    damage*=
+        1+
+        tower.path1*.30;
 
 
-    if(
-        tower.type==="Rapid"
-    ) {
-        reload /=
-            1+tower.path1*.22;
+    range+=
+        tower.path2*35;
+
+
+    if(tower.type==="Rapid") {
+
+        reload/=
+            1+
+            tower.path1*.22;
     }
 
 
-    if(
-        tower.type==="Ice"
-    ) {
+    if(tower.type==="Ice") {
+
         slow=
             tower.path1*.35;
     }
@@ -1428,6 +1585,7 @@ function getStats(tower) {
         tower.type==="Bomb" ||
         tower.type==="Torpedo"
     ) {
+
         splash=
             tower.path1*20+
             tower.path2*10;
@@ -1438,53 +1596,65 @@ function getStats(tower) {
         tower.type==="Wizard" ||
         tower.type==="Tesla"
     ) {
+
         pierce=
-            1+tower.path2*2;
+            1+
+            tower.path2*2;
     }
 
 
-    if(
-        tower.type==="Sniper"
-    ) {
+    if(tower.type==="Sniper") {
+
         damage=
             data.damage*
-            (1+tower.path1*.5);
+            (
+                1+
+                tower.path1*.5
+            );
     }
 
 
-    if(
-        tower.type==="Laser"
-    ) {
+    if(tower.type==="Laser") {
+
         reload=
             data.reload/
-            (1+tower.path1*.15);
+            (
+                1+
+                tower.path1*.15
+            );
     }
 
 
-    if(
-        tower.type==="Boat"
-    ) {
+    if(tower.type==="Boat") {
+
         damage=
             data.damage*
-            (1+tower.path1*.35);
+            (
+                1+
+                tower.path1*.35
+            );
     }
 
 
-    if(
-        tower.type==="Harpoon"
-    ) {
+    if(tower.type==="Harpoon") {
+
         damage=
             data.damage*
-            (1+tower.path1*.40);
+            (
+                1+
+                tower.path1*.40
+            );
     }
 
 
-    if(
-        tower.type==="Torpedo"
-    ) {
+    if(tower.type==="Torpedo") {
+
         damage=
             data.damage*
-            (1+tower.path1*.35);
+            (
+                1+
+                tower.path1*.35
+            );
     }
 
 
@@ -1524,7 +1694,9 @@ function upgradeCost(level) {
 
 function showNoTowerSelected() {
 
-    document.getElementById("upgrades").innerHTML =
+    document.getElementById(
+        "upgrades"
+    ).innerHTML=
         "Select a tower to see its three upgrade paths.";
 }
 
@@ -1532,12 +1704,15 @@ function showNoTowerSelected() {
 function showTowerInfo() {
 
     if(!selectedTower) {
+
         showNoTowerSelected();
+
         return;
     }
 
 
     const tower=selectedTower;
+
     const data=towerTypes[tower.type];
 
     const stats=getStats(tower);
@@ -1545,44 +1720,74 @@ function showTowerInfo() {
 
     let html="<hr>";
 
-    html+="<b>"+data.name+"</b><br><br>";
+    html+=
+        "<b>"+
+        data.name+
+        "</b><br><br>";
 
-    html+="Damage: "+Math.floor(stats.damage)+"<br>";
+    html+=
+        "Damage: "+
+        Math.floor(stats.damage)+
+        "<br>";
 
-    html+="Range: "+Math.floor(stats.range)+"<br>";
+    html+=
+        "Range: "+
+        Math.floor(stats.range)+
+        "<br>";
 
-    html+="Hitbox: "+Math.floor(stats.hitbox)+"<br>";
-
-    html+="<br>";
-
-    html+="Camouflage: "+
-        (data.camo?"yes":"no")+"<br>";
-
-    html+="Armor: "+
-        (data.armor?"yes":"no")+"<br>";
-
-    html+="Shield: "+
-        (data.shield?"yes":"no")+"<br>";
-
-    html+="<br>";
+    html+=
+        "Hitbox: "+
+        Math.floor(stats.hitbox)+
+        "<br><br>";
 
 
-    /* PATH 1 */
+    html+=
+        "Camouflage: "+
+        (
+            data.camo
+            ?"yes"
+            :"no"
+        )+
+        "<br>";
 
-    html+="<b>Path 1: "+
+    html+=
+        "Armor: "+
+        (
+            data.armor
+            ?"yes"
+            :"no"
+        )+
+        "<br>";
+
+    html+=
+        "Shield: "+
+        (
+            data.shield
+            ?"yes"
+            :"no"
+        )+
+        "<br><br>";
+
+
+    html+=
+        "<b>Path 1: "+
         data.tree1+
         "</b> — "+
         tower.path1+
         "/5<br>";
 
+
     if(tower.path1<5) {
 
-        const cost=upgradeCost(tower.path1);
+        const cost=
+            upgradeCost(
+                tower.path1
+            );
 
         html+=
             "<button onclick=\"upgradePath(1)\">"+
-            "Upgrade ("+
-            "$"+cost+
+            "Upgrade ($"+
+            cost+
             ")</button>";
 
     } else {
@@ -1594,22 +1799,25 @@ function showTowerInfo() {
     html+="<br><br>";
 
 
-    /* PATH 2 */
-
-    html+="<b>Path 2: "+
+    html+=
+        "<b>Path 2: "+
         data.tree2+
         "</b> — "+
         tower.path2+
         "/5<br>";
 
+
     if(tower.path2<5) {
 
-        const cost=upgradeCost(tower.path2);
+        const cost=
+            upgradeCost(
+                tower.path2
+            );
 
         html+=
             "<button onclick=\"upgradePath(2)\">"+
-            "Upgrade ("+
-            "$"+cost+
+            "Upgrade ($"+
+            cost+
             ")</button>";
 
     } else {
@@ -1621,23 +1829,25 @@ function showTowerInfo() {
     html+="<br><br>";
 
 
-    /* PATH 3 */
-
-    html+="<b>Path 3: "+
+    html+=
+        "<b>Path 3: "+
         data.tree3+
         "</b> — "+
         tower.path3+
         "/5<br>";
 
+
     if(tower.path3<5) {
 
         const cost=
-            upgradeCost(tower.path3+1);
+            upgradeCost(
+                tower.path3+1
+            );
 
         html+=
             "<button onclick=\"upgradePath(3)\">"+
-            "Upgrade ("+
-            "$"+cost+
+            "Upgrade ($"+
+            cost+
             ")</button>";
 
     } else {
@@ -1683,19 +1893,22 @@ function showTowerInfo() {
 
     if(tower.type==="Farm") {
 
-        html+="<br><br>";
-
-        html+="Farm income is only generated while a round is active.";
+        html+=
+            "<br><br>"+
+            "Farm income is only generated while a round is active.";
     }
 
 
     html+=
-        "<br><br><button onclick=\"sellSelectedTower()\">"+
+        "<br><br>"+
+        "<button onclick=\"sellSelectedTower()\">"+
         "Sell Tower"+
         "</button>";
 
 
-    document.getElementById("upgrades").innerHTML=html;
+    document.getElementById(
+        "upgrades"
+    ).innerHTML=html;
 }
 
 
@@ -1713,34 +1926,23 @@ function abilityDescription(tower) {
     const names={
 
         Arrow:"Volley",
-
         Rapid:"Overdrive",
-
         Cannon:"Big Blast",
-
         Sniper:"Execution",
-
         Ice:"Blizzard",
-
         Wizard:"Spell",
-
         Laser:"Overcharge",
-
         Bomb:"Meteor",
-
         Tesla:"Storm",
-
         Farm:"Bonus income",
-
         Boat:"Broadside",
-
         Harpoon:"Grapple",
-
         Torpedo:"Depth Charge"
     };
 
 
-    return names[tower.type] || "special ability";
+    return names[tower.type] ||
+        "special ability";
 }
 
 
@@ -1766,14 +1968,17 @@ function activateAbility() {
 
     if(tower.type==="Farm") {
 
-        money+=100+
+        money+=
+            100+
             tower.path3*30;
+
 
         createAbilityEffect(
             tower.x,
             tower.y,
             80
         );
+
 
         tower.abilityCooldown=20;
 
@@ -1785,7 +1990,8 @@ function activateAbility() {
     }
 
 
-    const stats=getStats(tower);
+    const stats=
+        getStats(tower);
 
 
     createAbilityEffect(
@@ -1794,10 +2000,6 @@ function activateAbility() {
         stats.range
     );
 
-
-    /* ================================================
-       ARROW
-    ================================================ */
 
     if(tower.type==="Arrow") {
 
@@ -1811,6 +2013,7 @@ function activateAbility() {
                     )
                 ];
 
+
             if(target) {
 
                 directHit(
@@ -1821,13 +2024,10 @@ function activateAbility() {
             }
         }
 
+
         tower.abilityCooldown=12;
     }
 
-
-    /* ================================================
-       RAPID
-    ================================================ */
 
     else if(tower.type==="Rapid") {
 
@@ -1837,15 +2037,15 @@ function activateAbility() {
     }
 
 
-    /* ================================================
-       CANNON
-    ================================================ */
-
     else if(tower.type==="Cannon") {
 
         for(const enemy of enemies) {
 
-            const p=getPath(enemy.distance);
+            const p=
+                getPath(
+                    enemy.distance
+                );
+
 
             if(
                 Math.hypot(
@@ -1862,30 +2062,35 @@ function activateAbility() {
             }
         }
 
+
         tower.abilityCooldown=18;
     }
 
-
-    /* ================================================
-       SNIPER
-    ================================================ */
 
     else if(tower.type==="Sniper") {
 
         let target=null;
 
+
         for(const enemy of enemies) {
 
-            if(canTowerHitEnemy(tower,enemy)) {
+            if(
+                canTowerHitEnemy(
+                    tower,
+                    enemy
+                )
+            ) {
 
                 if(
                     !target ||
                     enemy.hp<target.hp
                 ) {
+
                     target=enemy;
                 }
             }
         }
+
 
         if(target) {
 
@@ -1896,19 +2101,20 @@ function activateAbility() {
             );
         }
 
+
         tower.abilityCooldown=15;
     }
 
-
-    /* ================================================
-       ICE
-    ================================================ */
 
     else if(tower.type==="Ice") {
 
         for(const enemy of enemies) {
 
-            const p=getPath(enemy.distance);
+            const p=
+                getPath(
+                    enemy.distance
+                );
+
 
             if(
                 Math.hypot(
@@ -1917,7 +2123,15 @@ function activateAbility() {
                 )<=stats.range
             ) {
 
+                if(
+                    enemy.type.iceImmune
+                ) {
+                    continue;
+                }
+
+
                 enemy.slow=5;
+
 
                 directHit(
                     tower,
@@ -1927,13 +2141,10 @@ function activateAbility() {
             }
         }
 
+
         tower.abilityCooldown=16;
     }
 
-
-    /* ================================================
-       WIZARD
-    ================================================ */
 
     else if(tower.type==="Wizard") {
 
@@ -1954,13 +2165,10 @@ function activateAbility() {
             }
         }
 
+
         tower.abilityCooldown=18;
     }
 
-
-    /* ================================================
-       LASER
-    ================================================ */
 
     else if(tower.type==="Laser") {
 
@@ -1981,19 +2189,20 @@ function activateAbility() {
             }
         }
 
+
         tower.abilityCooldown=13;
     }
 
-
-    /* ================================================
-       BOMB
-    ================================================ */
 
     else if(tower.type==="Bomb") {
 
         for(const enemy of enemies) {
 
-            const p=getPath(enemy.distance);
+            const p=
+                getPath(
+                    enemy.distance
+                );
+
 
             if(
                 Math.hypot(
@@ -2010,13 +2219,10 @@ function activateAbility() {
             }
         }
 
+
         tower.abilityCooldown=20;
     }
 
-
-    /* ================================================
-       TESLA
-    ================================================ */
 
     else if(tower.type==="Tesla") {
 
@@ -2037,13 +2243,10 @@ function activateAbility() {
             }
         }
 
+
         tower.abilityCooldown=15;
     }
 
-
-    /* ================================================
-       BOAT
-    ================================================ */
 
     else if(tower.type==="Boat") {
 
@@ -2064,17 +2267,15 @@ function activateAbility() {
             }
         }
 
+
         tower.abilityCooldown=17;
     }
 
 
-    /* ================================================
-       HARPOON
-    ================================================ */
-
     else if(tower.type==="Harpoon") {
 
         let furthest=null;
+
 
         for(const enemy of enemies) {
 
@@ -2090,10 +2291,12 @@ function activateAbility() {
                     enemy.distance>
                     furthest.distance
                 ) {
+
                     furthest=enemy;
                 }
             }
         }
+
 
         if(furthest) {
 
@@ -2103,6 +2306,7 @@ function activateAbility() {
                 stats.damage*8
             );
 
+
             furthest.distance=
                 Math.max(
                     0,
@@ -2110,19 +2314,20 @@ function activateAbility() {
                 );
         }
 
+
         tower.abilityCooldown=20;
     }
 
-
-    /* ================================================
-       TORPEDO
-    ================================================ */
 
     else if(tower.type==="Torpedo") {
 
         for(const enemy of enemies) {
 
-            const p=getPath(enemy.distance);
+            const p=
+                getPath(
+                    enemy.distance
+                );
+
 
             if(
                 Math.hypot(
@@ -2139,6 +2344,7 @@ function activateAbility() {
             }
         }
 
+
         tower.abilityCooldown=19;
     }
 
@@ -2146,6 +2352,7 @@ function activateAbility() {
     checkDeaths();
 
     showTowerInfo();
+
     updateUI();
 }
 
@@ -2154,7 +2361,11 @@ function activateAbility() {
    DIRECT HIT
 ========================================================= */
 
-function directHit(tower,enemy,damage) {
+function directHit(
+    tower,
+    enemy,
+    damage
+) {
 
     if(
         !canTowerHitEnemy(
@@ -2181,22 +2392,41 @@ function directHit(tower,enemy,damage) {
 
 
 /* =========================================================
-   SPECIAL EFFECT
+   ABILITY EFFECT
 ========================================================= */
 
-function createAbilityEffect(x,y,size) {
+function createAbilityEffect(
+    x,
+    y,
+    size
+) {
 
-    const el=document.createElement("div");
+    const el=
+        document.createElement(
+            "div"
+        );
 
-    el.className="abilityEffect";
 
-    el.style.left=x+"px";
-    el.style.top=y+"px";
+    el.className=
+        "abilityEffect";
 
-    el.style.width=(size*2)+"px";
-    el.style.height=(size*2)+"px";
+
+    el.style.left=
+        x+"px";
+
+    el.style.top=
+        y+"px";
+
+
+    el.style.width=
+        (size*2)+"px";
+
+    el.style.height=
+        (size*2)+"px";
+
 
     game.appendChild(el);
+
 
     setTimeout(
         ()=>el.remove(),
@@ -2216,16 +2446,21 @@ function upgradePath(path) {
     }
 
 
-    const tower=selectedTower;
+    const tower=
+        selectedTower;
+
 
     let level;
+
 
     if(path===1) {
         level=tower.path1;
     }
+
     else if(path===2) {
         level=tower.path2;
     }
+
     else {
         level=tower.path3;
     }
@@ -2236,17 +2471,20 @@ function upgradePath(path) {
     }
 
 
-    /*
-       Third path starts slightly more expensive.
-    */
-
     let cost;
 
+
     if(path===3) {
-        cost=upgradeCost(level+1);
-    }
-    else {
-        cost=upgradeCost(level);
+
+        cost=
+            upgradeCost(
+                level+1
+            );
+
+    } else {
+
+        cost=
+            upgradeCost(level);
     }
 
 
@@ -2298,65 +2536,53 @@ function sellSelectedTower() {
     }
 
 
-    const tower=selectedTower;
+    const tower=
+        selectedTower;
 
-    const refund=Math.floor(
-        tower.spent*.70
-    );
+
+    const refund=
+        Math.floor(
+            tower.spent*.70
+        );
 
 
     money+=refund;
 
-    towerCounts[tower.type]--;
+
+    towerCounts[
+        tower.type
+    ]--;
+
 
     tower.element.remove();
 
 
-    const index=towers.indexOf(tower);
+    const index=
+        towers.indexOf(tower);
+
 
     if(index!==-1) {
-        towers.splice(index,1);
+
+        towers.splice(
+            index,
+            1
+        );
     }
 
 
     selectedTower=null;
 
-    document.getElementById("selected").textContent =
-        "None";
+
+    document.getElementById(
+        "selected"
+    ).textContent="None";
+
 
     showNoTowerSelected();
 
     hideCircles();
 
     updateUI();
-}
-
-
-/* =========================================================
-   TOWER TEXT
-========================================================= */
-
-function updateTowerText(tower) {
-
-    const data=towerTypes[tower.type];
-
-    const level=
-        tower.path1+
-        tower.path2+
-        tower.path3;
-
-
-    tower.element.textContent =
-        data.name+
-        " "+level;
-
-
-    if(tower.path3>=3) {
-
-        tower.element.classList.add(
-            "specialTower"
-        );
-    }
 }
 
 
@@ -2387,175 +2613,270 @@ function farmIncome(tower) {
    ENEMY TYPES
 ========================================================= */
 
+/*
+   IMPORTANT:
+
+   label = what is displayed above the enemy.
+
+   ability = special thing the enemy does.
+
+   Animals therefore do not have to display
+   their species name.
+
+   Example:
+
+   Polar Bear
+   -> "ice immune"
+
+   Bird
+   -> "flying"
+
+   Turtle
+   -> "heavy armor"
+
+   Normal
+   -> nothing above it.
+*/
+
 const enemyTypes = [
 
 {
-name:"normal",
-label:"normal",
-hp:20,
-speed:75,
-reward:5,
-color:"red",
-armored:false,
-camo:false,
-shielded:false,
-regen:false
+    name:"normal",
+    label:"",
+    ability:"",
+    hp:20,
+    speed:75,
+    reward:5,
+    color:"red",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"cat",
-label:"cat",
-hp:38,
-speed:68,
-reward:7,
-color:"red",
-armored:false,
-camo:false,
-shielded:false,
-regen:false
+    name:"cat",
+    label:"",
+    ability:"",
+    hp:38,
+    speed:68,
+    reward:7,
+    color:"red",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"dog",
-label:"dog",
-hp:70,
-speed:52,
-reward:11,
-color:"red",
-armored:false,
-camo:false,
-shielded:false,
-regen:false
+    name:"dog",
+    label:"",
+    ability:"",
+    hp:70,
+    speed:52,
+    reward:11,
+    color:"red",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"bird",
-label:"bird",
-hp:30,
-speed:110,
-reward:10,
-color:"red",
-armored:false,
-camo:false,
-shielded:false,
-regen:false
+    name:"bird",
+    label:"flying",
+    ability:"flying",
+    hp:30,
+    speed:110,
+    reward:10,
+    color:"orange",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"fast",
-label:"fast",
-hp:55,
-speed:155,
-reward:18,
-color:"orange",
-armored:false,
-camo:false,
-shielded:false,
-regen:false
+    name:"polarBear",
+    label:"ice immune",
+    ability:"ice immune",
+    hp:150,
+    speed:42,
+    reward:35,
+    color:"cyan",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:false,
+    iceImmune:true
 },
 
 {
-name:"armored",
-label:"armored",
-hp:180,
-speed:31,
-reward:25,
-color:"blue",
-armored:true,
-camo:false,
-shielded:false,
-regen:false
+    name:"turtle",
+    label:"heavy armor",
+    ability:"heavy armor",
+    hp:260,
+    speed:20,
+    reward:45,
+    color:"blue",
+    armored:true,
+    camo:false,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"camouflage",
-label:"camouflage",
-hp:75,
-speed:72,
-reward:28,
-color:"green",
-armored:false,
-camo:true,
-shielded:false,
-regen:false
+    name:"bat",
+    label:"camouflage detection",
+    ability:"camouflage detection",
+    hp:80,
+    speed:125,
+    reward:30,
+    color:"purple",
+    armored:false,
+    camo:true,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"shielded",
-label:"shielded",
-hp:140,
-speed:48,
-reward:32,
-color:"purple",
-armored:false,
-camo:false,
-shielded:true,
-regen:false
+    name:"fox",
+    label:"fast",
+    ability:"fast",
+    hp:95,
+    speed:145,
+    reward:25,
+    color:"orange",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"regenerating",
-label:"regenerating",
-hp:160,
-speed:50,
-reward:38,
-color:"darkgreen",
-armored:false,
-camo:false,
-shielded:false,
-regen:true
+    name:"fast",
+    label:"fast",
+    ability:"fast",
+    hp:55,
+    speed:155,
+    reward:18,
+    color:"orange",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"swarm",
-label:"swarm",
-hp:25,
-speed:175,
-reward:12,
-color:"orange",
-armored:false,
-camo:false,
-shielded:false,
-regen:false
+    name:"armored",
+    label:"armored",
+    ability:"armored",
+    hp:180,
+    speed:31,
+    reward:25,
+    color:"blue",
+    armored:true,
+    camo:false,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"toxic",
-label:"toxic",
-hp:220,
-speed:43,
-reward:45,
-color:"darkgreen",
-armored:false,
-camo:false,
-shielded:false,
-regen:true
+    name:"camouflage",
+    label:"camouflage",
+    ability:"camouflage",
+    hp:75,
+    speed:72,
+    reward:28,
+    color:"green",
+    armored:false,
+    camo:true,
+    shielded:false,
+    regen:false
 },
 
 {
-name:"giant",
-label:"giant",
-hp:500,
-speed:25,
-reward:70,
-color:"brown",
-armored:true,
-camo:false,
-shielded:false,
-regen:false
+    name:"shielded",
+    label:"shielded",
+    ability:"shielded",
+    hp:140,
+    speed:48,
+    reward:32,
+    color:"purple",
+    armored:false,
+    camo:false,
+    shielded:true,
+    regen:false
 },
 
 {
-name:"boss",
-label:"BOSS",
-hp:1000,
-speed:20,
-reward:500,
-color:"black",
-armored:true,
-camo:true,
-shielded:true,
-regen:true
+    name:"regenerating",
+    label:"regenerating",
+    ability:"regenerating",
+    hp:160,
+    speed:50,
+    reward:38,
+    color:"darkgreen",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:true
+},
+
+{
+    name:"swarm",
+    label:"swarm",
+    ability:"swarm",
+    hp:25,
+    speed:175,
+    reward:12,
+    color:"orange",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:false
+},
+
+{
+    name:"toxic",
+    label:"toxic",
+    ability:"regeneration",
+    hp:220,
+    speed:43,
+    reward:45,
+    color:"darkgreen",
+    armored:false,
+    camo:false,
+    shielded:false,
+    regen:true
+},
+
+{
+    name:"giant",
+    label:"giant",
+    ability:"giant",
+    hp:500,
+    speed:25,
+    reward:70,
+    color:"brown",
+    armored:true,
+    camo:false,
+    shielded:false,
+    regen:false
+},
+
+{
+    name:"boss",
+    label:"BOSS",
+    ability:"boss",
+    hp:1000,
+    speed:20,
+    reward:500,
+    color:"black",
+    armored:true,
+    camo:true,
+    shielded:true,
+    regen:true
 }
 
 ];
@@ -2571,60 +2892,139 @@ function chooseEnemyType() {
 
 
     /*
-       Bosses are NOT selected randomly.
-       Every tenth wave gets them separately.
+       Animals are rare.
+
+       They do not replace the ordinary enemies;
+       they are occasional special enemies.
     */
 
-    if(round>=16 && r<.035) {
+
+    if(
+        round>=8 &&
+        r<.025
+    ) {
+
+        return enemyTypes.find(
+            e=>e.name==="polarBear"
+        );
+    }
+
+
+    if(
+        round>=6 &&
+        r<.045
+    ) {
+
+        return enemyTypes.find(
+            e=>e.name==="turtle"
+        );
+    }
+
+
+    if(
+        round>=5 &&
+        r<.065
+    ) {
+
+        return enemyTypes.find(
+            e=>e.name==="bat"
+        );
+    }
+
+
+    if(
+        round>=4 &&
+        r<.085
+    ) {
+
+        return enemyTypes.find(
+            e=>e.name==="fox"
+        );
+    }
+
+
+    if(
+        round>=16 &&
+        r<.12
+    ) {
+
         return enemyTypes.find(
             e=>e.name==="giant"
         );
     }
 
 
-    if(round>=13 && r<.075) {
+    if(
+        round>=13 &&
+        r<.17
+    ) {
+
         return enemyTypes.find(
             e=>e.name==="toxic"
         );
     }
 
 
-    if(round>=11 && r<.12) {
+    if(
+        round>=11 &&
+        r<.22
+    ) {
+
         return enemyTypes.find(
             e=>e.name==="swarm"
         );
     }
 
 
-    if(round>=9 && r<.19) {
+    if(
+        round>=9 &&
+        r<.30
+    ) {
+
         return enemyTypes.find(
             e=>e.name==="regenerating"
         );
     }
 
 
-    if(round>=7 && r<.26) {
+    if(
+        round>=7 &&
+        r<.38
+    ) {
+
         return enemyTypes.find(
             e=>e.name==="shielded"
         );
     }
 
 
-    if(round>=5 && r<.32) {
+    if(
+        round>=5 &&
+        r<.46
+    ) {
+
         return enemyTypes.find(
             e=>e.name==="camouflage"
         );
     }
 
 
-    if(round>=4 && r<.40) {
+    if(
+        round>=4 &&
+        r<.55
+    ) {
+
         return enemyTypes.find(
             e=>e.name==="armored"
         );
     }
 
 
-    if(round>=3 && r<.50) {
+    if(
+        round>=3 &&
+        r<.65
+    ) {
+
         return enemyTypes.find(
             e=>e.name==="fast"
         );
@@ -2632,84 +3032,111 @@ function chooseEnemyType() {
 
 
     const regular=[
-        enemyTypes[0],
-        enemyTypes[1],
-        enemyTypes[2],
-        enemyTypes[3]
+
+        enemyTypes.find(
+            e=>e.name==="normal"
+        ),
+
+        enemyTypes.find(
+            e=>e.name==="cat"
+        ),
+
+        enemyTypes.find(
+            e=>e.name==="dog"
+        ),
+
+        enemyTypes.find(
+            e=>e.name==="bird"
+        )
     ];
 
 
     return regular[
         Math.floor(
-            Math.random()*regular.length
+            Math.random()*
+            regular.length
         )
     ];
 }
 
 
 /* =========================================================
-   BOSS
+   CREATE BOSS
 ========================================================= */
 
 function createBoss() {
 
-    const d=difficulties[chosenDifficulty];
+    const d=
+        difficulties[
+            chosenDifficulty
+        ];
 
-
-    /*
-       Boss scaling is intentionally very aggressive.
-
-       Every boss gets:
-       - massive HP
-       - armor
-       - camouflage
-       - shield
-       - regeneration
-       - increasing speed
-       - increasing reward
-    */
 
     const bossScale=
         Math.pow(
             1.85,
-            Math.floor(round/10)-1
+            Math.floor(
+                round/10
+            )-1
         );
 
 
-    const boss=enemyTypes.find(
-        e=>e.name==="boss"
-    );
+    const boss=
+        enemyTypes.find(
+            e=>e.name==="boss"
+        );
 
 
     const hp=
         3500*
         bossScale*
         d.enemyHealth*
-        (1+round*.035);
+        (
+            1+
+            round*.035
+        );
 
 
-    const element=document.createElement("div");
+    const element=
+        document.createElement(
+            "div"
+        );
+
 
     element.className="enemy";
 
 
-    const typeEl=document.createElement("span");
-
-    typeEl.className="enemyType";
-
-    typeEl.textContent="BOSS";
-
-    typeEl.style.color="black";
+    const typeEl=
+        document.createElement(
+            "span"
+        );
 
 
-    const nameEl=document.createElement("span");
+    typeEl.className=
+        "enemyType";
 
-    nameEl.className="enemyName";
+    typeEl.textContent=
+        "BOSS";
 
-    nameEl.textContent="boss";
+    typeEl.style.color=
+        "black";
+
+
+    const nameEl=
+        document.createElement(
+            "span"
+        );
+
+
+    nameEl.className=
+        "enemyName";
+
+    nameEl.textContent=
+        "boss";
 
 
     element.appendChild(typeEl);
+
     element.appendChild(nameEl);
 
     game.appendChild(element);
@@ -2728,7 +3155,10 @@ function createBoss() {
         speed:
             boss.speed*
             d.enemySpeed*
-            (1+round*.012),
+            (
+                1+
+                round*.012
+            ),
 
         slow:0,
 
@@ -2738,14 +3168,19 @@ function createBoss() {
 
 
 /* =========================================================
-   SPAWN ENEMY
+   CREATE ENEMY
 ========================================================= */
 
 function spawnEnemy() {
 
-    const type=chooseEnemyType();
+    const type=
+        chooseEnemyType();
 
-    const d=difficulties[chosenDifficulty];
+
+    const d=
+        difficulties[
+            chosenDifficulty
+        ];
 
 
     let hp=
@@ -2753,39 +3188,119 @@ function spawnEnemy() {
         d.enemyHealth;
 
 
-    /*
-       Ordinary enemy scaling.
-       It increases every round, but bosses are
-       deliberately far above this curve.
-    */
-
     hp*=
         1+
         round*.065;
 
 
-    const element=document.createElement("div");
-
-    element.className="enemy";
-
-
-    const typeEl=document.createElement("span");
-
-    typeEl.className="enemyType";
-
-    typeEl.textContent=type.label;
-
-    typeEl.style.color=type.color;
+    const element=
+        document.createElement(
+            "div"
+        );
 
 
-    const nameEl=document.createElement("span");
+    element.className=
+        "enemy";
 
-    nameEl.className="enemyName";
 
-    nameEl.textContent=type.name;
+    /*
+       SPECIAL TYPE TEXT
+
+       normal:
+       no type text
+
+       normal animal:
+       animal name
+
+       special animal:
+       ability name
+
+       normal special enemy:
+       type name
+    */
+
+    const typeEl=
+        document.createElement(
+            "span"
+        );
+
+
+    typeEl.className=
+        "enemyType";
+
+
+    if(
+        type.name==="normal"
+    ) {
+
+        typeEl.textContent="";
+
+    }
+
+    else if(
+        type.ability &&
+        (
+            type.name==="polarBear" ||
+            type.name==="turtle" ||
+            type.name==="bat" ||
+            type.name==="fox"
+        )
+    ) {
+
+        typeEl.textContent=
+            type.ability;
+
+        typeEl.style.color=
+            type.color;
+
+    }
+
+    else {
+
+        typeEl.textContent=
+            type.label;
+
+        typeEl.style.color=
+            type.color;
+    }
+
+
+    /*
+       The actual enemy name.
+
+       For special animals, hide the species name
+       because the ability is the important information.
+    */
+
+    const nameEl=
+        document.createElement(
+            "span"
+        );
+
+
+    nameEl.className=
+        "enemyName";
+
+
+    if(
+        type.name==="polarBear" ||
+        type.name==="turtle" ||
+        type.name==="bat" ||
+        type.name==="fox"
+    ) {
+
+        nameEl.textContent=
+            "";
+
+    } else {
+
+        nameEl.textContent=
+            type.name;
+    }
 
 
     element.appendChild(typeEl);
+
     element.appendChild(nameEl);
 
     game.appendChild(element);
@@ -2804,7 +3319,10 @@ function spawnEnemy() {
         speed:
             type.speed*
             d.enemySpeed*
-            (1+round*.006),
+            (
+                1+
+                round*.006
+            ),
 
         slow:0,
 
@@ -2819,7 +3337,10 @@ function spawnEnemy() {
 
 function startRound() {
 
-    if(roundRunning || paused) {
+    if(
+        roundRunning ||
+        paused
+    ) {
         return;
     }
 
@@ -2827,42 +3348,27 @@ function startRound() {
     roundRunning=true;
 
 
-    const d=difficulties[chosenDifficulty];
-
-
-    /*
-       Much larger waves.
-
-       Early:
-       25+
-       Later:
-       50+
-       Very late:
-       hundreds
-    */
-
     enemiesToSpawn=
         Math.floor(
             (
                 25+
                 round*7+
-                Math.pow(round,1.35)
+                Math.pow(
+                    round,
+                    1.35
+                )
             )*
             (
                 chosenDifficulty==="insane"
                 ?1.25
-                :chosenDifficulty==="hard"
+                :
+                chosenDifficulty==="hard"
                 ?1.12
-                :1
+                :
+                1
             )
         );
 
-
-    /*
-       Boss wave:
-       remove one spawn slot and create the boss
-       separately.
-    */
 
     if(round%10===0) {
 
@@ -2888,13 +3394,17 @@ function startRound() {
                 "bossWarning"
             );
 
+
         if(warning) {
 
-            warning.style.display="block";
+            warning.style.display=
+                "block";
+
 
             setTimeout(
                 ()=>{
-                    warning.style.display="none";
+                    warning.style.display=
+                        "none";
                 },
                 2500
             );
@@ -2921,6 +3431,7 @@ function roundUpdate(dt) {
             autoplay &&
             nextRoundTimer<=0
         ) {
+
             startRound();
         }
 
@@ -2942,10 +3453,6 @@ function roundUpdate(dt) {
         enemiesToSpawn--;
 
 
-        /*
-           Very dense waves.
-        */
-
         spawnTimer=
             Math.max(
                 .06,
@@ -2954,11 +3461,6 @@ function roundUpdate(dt) {
             );
     }
 
-
-    /*
-       The round ends only after every enemy,
-       including the boss, is gone.
-    */
 
     if(
         enemiesToSpawn===0 &&
@@ -2974,10 +3476,6 @@ function roundUpdate(dt) {
             30+
             round*5;
 
-
-        /*
-           Boss waves give a large clear bonus.
-        */
 
         if(round%10===0) {
 
@@ -3002,17 +3500,29 @@ function roundUpdate(dt) {
 
 function pathLength() {
 
-    const path=maps[chosenMap].path;
+    const path=
+        maps[chosenMap].path;
+
 
     let total=0;
 
-    for(let i=0;i<path.length-1;i++) {
 
-        total+=Math.hypot(
-            path[i+1].x-path[i].x,
-            path[i+1].y-path[i].y
-        );
+    for(
+        let i=0;
+        i<path.length-1;
+        i++
+    ) {
+
+        total+=
+            Math.hypot(
+                path[i+1].x-
+                path[i].x,
+
+                path[i+1].y-
+                path[i].y
+            );
     }
+
 
     return total;
 }
@@ -3020,7 +3530,8 @@ function pathLength() {
 
 function getPath(distance) {
 
-    const path=maps[chosenMap].path;
+    const path=
+        maps[chosenMap].path;
 
 
     if(distance<=0) {
@@ -3032,29 +3543,53 @@ function getPath(distance) {
     }
 
 
-    let remaining=distance;
+    let remaining=
+        distance;
 
 
-    for(let i=0;i<path.length-1;i++) {
+    for(
+        let i=0;
+        i<path.length-1;
+        i++
+    ) {
 
         const a=path[i];
+
         const b=path[i+1];
 
-        const dx=b.x-a.x;
-        const dy=b.y-a.y;
 
-        const length=Math.hypot(dx,dy);
+        const dx=
+            b.x-a.x;
+
+        const dy=
+            b.y-a.y;
 
 
-        if(remaining<=length) {
+        const length=
+            Math.hypot(
+                dx,
+                dy
+            );
+
+
+        if(
+            remaining<=length
+        ) {
 
             const ratio=
-                remaining/length;
+                remaining/
+                length;
 
 
             return {
-                x:a.x+dx*ratio,
-                y:a.y+dy*ratio
+
+                x:
+                    a.x+
+                    dx*ratio,
+
+                y:
+                    a.y+
+                    dy*ratio
             };
         }
 
@@ -3063,7 +3598,9 @@ function getPath(distance) {
     }
 
 
-    const last=path[path.length-1];
+    const last=
+        path[path.length-1];
+
 
     return {
         x:last.x,
@@ -3078,7 +3615,8 @@ function getPath(distance) {
 
 function enemyUpdate(dt) {
 
-    const total=pathLength();
+    const total=
+        pathLength();
 
 
     for(
@@ -3087,10 +3625,12 @@ function enemyUpdate(dt) {
         i--
     ) {
 
-        const enemy=enemies[i];
+        const enemy=
+            enemies[i];
 
 
-        let speed=enemy.speed;
+        let speed=
+            enemy.speed;
 
 
         if(enemy.slow>0) {
@@ -3101,16 +3641,13 @@ function enemyUpdate(dt) {
         }
 
 
-        /*
-           Regeneration.
-        */
-
         if(enemy.type.regen) {
 
             enemy.hp+=
                 enemy.maxHP*
                 .015*
                 dt;
+
 
             enemy.hp=
                 Math.min(
@@ -3146,7 +3683,9 @@ function enemyUpdate(dt) {
             enemies.splice(i,1);
 
 
-            if(enemy.type.name==="boss") {
+            if(
+                enemy.type.name==="boss"
+            ) {
 
                 lives-=10;
 
@@ -3169,15 +3708,24 @@ function enemyUpdate(dt) {
 
 
 /* =========================================================
-   TOWER RESTRICTIONS
+   CAN TOWER HIT ENEMY
 ========================================================= */
 
-function canTowerHitEnemy(tower,enemy) {
+function canTowerHitEnemy(
+    tower,
+    enemy
+) {
 
-    const data=towerTypes[tower.type];
+    const data=
+        towerTypes[
+            tower.type
+        ];
 
 
-    if(tower.type==="Farm") {
+    if(
+        tower.type==="Farm"
+    ) {
+
         return false;
     }
 
@@ -3186,6 +3734,7 @@ function canTowerHitEnemy(tower,enemy) {
         enemy.type.camo &&
         !data.camo
     ) {
+
         return false;
     }
 
@@ -3194,6 +3743,7 @@ function canTowerHitEnemy(tower,enemy) {
         enemy.type.armored &&
         !data.armor
     ) {
+
         return false;
     }
 
@@ -3202,6 +3752,21 @@ function canTowerHitEnemy(tower,enemy) {
         enemy.type.shielded &&
         !data.shield
     ) {
+
+        return false;
+    }
+
+
+    /*
+       Polar bear / ice immune animals
+       cannot be damaged or frozen by Ice.
+    */
+
+    if(
+        enemy.type.iceImmune &&
+        tower.type==="Ice"
+    ) {
+
         return false;
     }
 
@@ -3218,25 +3783,28 @@ function towerUpdate(dt) {
 
     for(const tower of towers) {
 
-        /*
-           Ability cooldown.
-        */
-
-        if(tower.abilityCooldown>0) {
+        if(
+            tower.abilityCooldown>0
+        ) {
 
             tower.abilityCooldown-=dt;
         }
 
 
-        /* FARM */
-
-        if(tower.type==="Farm") {
+        if(
+            tower.type==="Farm"
+        ) {
 
             /*
-               Explicitly only while roundRunning.
+               Farms ONLY make money while a
+               round is actively running.
             */
 
-            if(!roundRunning || paused) {
+            if(
+                !roundRunning ||
+                paused
+            ) {
+
                 continue;
             }
 
@@ -3248,12 +3816,17 @@ function towerUpdate(dt) {
             tower.farmTimer-=dt;
 
 
-            if(tower.farmTimer<=0) {
+            if(
+                tower.farmTimer<=0
+            ) {
 
-                money+=income.income;
+                money+=
+                    income.income;
+
 
                 tower.farmTimer=
                     income.interval;
+
 
                 updateUI();
             }
@@ -3263,15 +3836,12 @@ function towerUpdate(dt) {
         }
 
 
-        const stats=getStats(tower);
+        const stats=
+            getStats(tower);
 
 
         tower.cooldown-=dt;
 
-
-        /*
-           Rapid special ability.
-        */
 
         let effectiveReload=
             stats.reload;
@@ -3288,7 +3858,9 @@ function towerUpdate(dt) {
         }
 
 
-        if(tower.cooldown>0) {
+        if(
+            tower.cooldown>0
+        ) {
             continue;
         }
 
@@ -3298,7 +3870,9 @@ function towerUpdate(dt) {
         let best=-Infinity;
 
 
-        for(const enemy of enemies) {
+        for(
+            const enemy of enemies
+        ) {
 
             if(
                 !canTowerHitEnemy(
@@ -3306,6 +3880,7 @@ function towerUpdate(dt) {
                     enemy
                 )
             ) {
+
                 continue;
             }
 
@@ -3330,7 +3905,8 @@ function towerUpdate(dt) {
 
                 target=enemy;
 
-                best=enemy.distance;
+                best=
+                    enemy.distance;
             }
         }
 
@@ -3341,6 +3917,7 @@ function towerUpdate(dt) {
                 tower,
                 target
             );
+
 
             tower.cooldown=
                 effectiveReload;
@@ -3353,15 +3930,26 @@ function towerUpdate(dt) {
    FIRE
 ========================================================= */
 
-function fire(tower,target) {
+function fire(
+    tower,
+    target
+) {
 
-    const stats=getStats(tower);
+    const stats=
+        getStats(tower);
 
-    const element=document.createElement("span");
+
+    const element=
+        document.createElement(
+            "span"
+        );
+
 
     element.className="bullet";
 
-    element.textContent="bullet";
+    element.textContent=
+        "bullet";
+
 
     game.appendChild(element);
 
@@ -3373,15 +3961,22 @@ function fire(tower,target) {
 
         target:target,
 
-        speed:towerTypes[tower.type].projectile,
+        speed:
+            towerTypes[
+                tower.type
+            ].projectile,
 
-        damage:stats.damage,
+        damage:
+            stats.damage,
 
-        splash:stats.splash,
+        splash:
+            stats.splash,
 
-        slow:stats.slow,
+        slow:
+            stats.slow,
 
-        pierce:stats.pierce,
+        pierce:
+            stats.pierce,
 
         tower:tower,
 
@@ -3391,7 +3986,7 @@ function fire(tower,target) {
 
 
 /* =========================================================
-   BULLETS
+   BULLET UPDATE
 ========================================================= */
 
 function bulletUpdate(dt) {
@@ -3402,7 +3997,8 @@ function bulletUpdate(dt) {
         i--
     ) {
 
-        const bullet=bullets[i];
+        const bullet=
+            bullets[i];
 
 
         if(
@@ -3425,18 +4021,27 @@ function bulletUpdate(dt) {
             );
 
 
-        const dx=p.x-bullet.x;
-        const dy=p.y-bullet.y;
+        const dx=
+            p.x-bullet.x;
+
+        const dy=
+            p.y-bullet.y;
+
 
         const distance=
-            Math.hypot(dx,dy);
+            Math.hypot(
+                dx,
+                dy
+            );
 
 
         const movement=
             bullet.speed*dt;
 
 
-        if(distance<=movement) {
+        if(
+            distance<=movement
+        ) {
 
             hit(bullet);
 
@@ -3471,7 +4076,8 @@ function bulletUpdate(dt) {
 
 function hit(bullet) {
 
-    const target=bullet.target;
+    const target=
+        bullet.target;
 
 
     if(
@@ -3480,11 +4086,13 @@ function hit(bullet) {
             target
         )
     ) {
+
         return;
     }
 
 
-    let damage=bullet.damage;
+    let damage=
+        bullet.damage;
 
 
     if(target.type.armored) {
@@ -3500,7 +4108,10 @@ function hit(bullet) {
     target.hp-=damage;
 
 
-    if(bullet.slow>0) {
+    if(
+        bullet.slow>0 &&
+        !target.type.iceImmune
+    ) {
 
         target.slow=
             Math.max(
@@ -3511,11 +4122,9 @@ function hit(bullet) {
     }
 
 
-    /*
-       Splash.
-    */
-
-    if(bullet.splash>0) {
+    if(
+        bullet.splash>0
+    ) {
 
         const center=
             getPath(
@@ -3523,7 +4132,9 @@ function hit(bullet) {
             );
 
 
-        for(const enemy of enemies) {
+        for(
+            const enemy of enemies
+        ) {
 
             if(enemy===target) {
                 continue;
@@ -3536,6 +4147,7 @@ function hit(bullet) {
                     enemy
                 )
             ) {
+
                 continue;
             }
 
@@ -3559,12 +4171,18 @@ function hit(bullet) {
                     bullet.damage*.45;
 
 
-                if(enemy.type.armored) {
+                if(
+                    enemy.type.armored
+                ) {
+
                     d*=.55;
                 }
 
 
-                if(enemy.type.shielded) {
+                if(
+                    enemy.type.shielded
+                ) {
+
                     d*=.60;
                 }
 
@@ -3575,16 +4193,16 @@ function hit(bullet) {
     }
 
 
-    /*
-       Pierce.
-    */
-
-    if(bullet.pierce>1) {
+    if(
+        bullet.pierce>1
+    ) {
 
         let count=0;
 
 
-        for(const enemy of enemies) {
+        for(
+            const enemy of enemies
+        ) {
 
             if(enemy===target) {
                 continue;
@@ -3595,6 +4213,7 @@ function hit(bullet) {
                 count>=
                 bullet.pierce-1
             ) {
+
                 break;
             }
 
@@ -3605,6 +4224,7 @@ function hit(bullet) {
                     enemy
                 )
             ) {
+
                 continue;
             }
 
@@ -3631,12 +4251,18 @@ function hit(bullet) {
                     bullet.damage*.5;
 
 
-                if(enemy.type.armored) {
+                if(
+                    enemy.type.armored
+                ) {
+
                     d*=.55;
                 }
 
 
-                if(enemy.type.shielded) {
+                if(
+                    enemy.type.shielded
+                ) {
+
                     d*=.60;
                 }
 
@@ -3660,7 +4286,9 @@ function hit(bullet) {
 function checkDeaths() {
 
     const d=
-        difficulties[chosenDifficulty];
+        difficulties[
+            chosenDifficulty
+        ];
 
 
     for(
@@ -3669,7 +4297,8 @@ function checkDeaths() {
         i--
     ) {
 
-        const enemy=enemies[i];
+        const enemy=
+            enemies[i];
 
 
         if(enemy.hp<=0) {
@@ -3678,17 +4307,15 @@ function checkDeaths() {
                 enemy.type.reward;
 
 
-            /*
-               Boss rewards scale aggressively.
-            */
-
             if(
                 enemy.type.name==="boss"
             ) {
 
                 reward=
                     500*
-                    Math.floor(round/10);
+                    Math.floor(
+                        round/10
+                    );
             }
 
 
@@ -3720,8 +4347,9 @@ function toggleAuto() {
     autoplay=!autoplay;
 
 
-    document.getElementById("auto")
-        .textContent=
+    document.getElementById(
+        "auto"
+    ).textContent=
         autoplay
         ?
         "ON"
@@ -3749,8 +4377,9 @@ function pauseGame() {
     paused=!paused;
 
 
-    document.getElementById("pauseButton")
-        .textContent=
+    document.getElementById(
+        "pauseButton"
+    ).textContent=
         paused
         ?
         "Resume"
@@ -3762,7 +4391,9 @@ function pauseGame() {
 
         hideCircles();
 
-    } else if(selectedTower) {
+    }
+
+    else if(selectedTower) {
 
         showCircles(
             selectedTower,
@@ -3778,12 +4409,13 @@ function pauseGame() {
 ========================================================= */
 
 function restartGame() {
+
     startGame();
 }
 
 
 /* =========================================================
-   MENU
+   BACK TO MENU
 ========================================================= */
 
 function backToMenu() {
@@ -3792,11 +4424,15 @@ function backToMenu() {
 
     hideCircles();
 
-    document.getElementById("gameScreen")
-        .style.display="none";
 
-    document.getElementById("menu")
-        .style.display="block";
+    document.getElementById(
+        "gameScreen"
+    ).style.display="none";
+
+
+    document.getElementById(
+        "menu"
+    ).style.display="block";
 }
 
 
@@ -3807,16 +4443,20 @@ function backToMenu() {
 function gameOver() {
 
     roundRunning=false;
+
     paused=true;
 
     hideCircles();
 
 
-    document.getElementById("finalScore")
-        .textContent=score;
+    document.getElementById(
+        "finalScore"
+    ).textContent=score;
 
-    document.getElementById("gameOver")
-        .style.display="block";
+
+    document.getElementById(
+        "gameOver"
+    ).style.display="block";
 }
 
 
@@ -3826,26 +4466,40 @@ function gameOver() {
 
 function updateUI() {
 
-    document.getElementById("money").textContent =
+    document.getElementById(
+        "money"
+    ).textContent=
         Math.floor(money);
 
-    document.getElementById("lives").textContent =
+
+    document.getElementById(
+        "lives"
+    ).textContent=
         lives;
 
-    document.getElementById("round").textContent =
+
+    document.getElementById(
+        "round"
+    ).textContent=
         round;
 
-    document.getElementById("score").textContent =
+
+    document.getElementById(
+        "score"
+    ).textContent=
         score;
 
 
-    for(const type in towerTypes) {
+    for(
+        const type in towerTypes
+    ) {
 
         const element=
             document.getElementById(
                 "count"+
                 type
             );
+
 
         if(element) {
 
@@ -3869,7 +4523,11 @@ function loop(time) {
     lastTime=time;
 
 
-    dt=Math.min(dt,.05);
+    dt=
+        Math.min(
+            dt,
+            .05
+        );
 
 
     if(
@@ -3883,13 +4541,21 @@ function loop(time) {
             dt*gameSpeed;
 
 
-        roundUpdate(scaledDt);
+        roundUpdate(
+            scaledDt
+        );
 
-        enemyUpdate(scaledDt);
+        enemyUpdate(
+            scaledDt
+        );
 
-        towerUpdate(scaledDt);
+        towerUpdate(
+            scaledDt
+        );
 
-        bulletUpdate(scaledDt);
+        bulletUpdate(
+            scaledDt
+        );
     }
 
 
@@ -3898,7 +4564,7 @@ function loop(time) {
 
 
 /* =========================================================
-   INITIAL
+   INITIALIZE
 ========================================================= */
 
 showNoTowerSelected();
