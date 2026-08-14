@@ -1,4713 +1,1591 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Letter Tower Defence</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Line Defense</title>
 <style>
 *{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#fff;color:#000}
+button,input{font:inherit}
+#game{width:100vw;height:100vh;display:flex;flex-direction:column;position:relative}
 
-body{
-    margin:0;
-    background:white;
-    color:black;
-    font-family:Arial,sans-serif;
+/* ============ TOP BAR (plain, no header styling) ============ */
+#topbar{
+    flex:0 0 auto;display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:6px;z-index:20;
+    border-bottom:1px solid #000;
 }
+#title{font-weight:bold;margin-right:6px}
+.stat{border:1px solid #000;padding:2px 6px}
+.topBtn{border:1px solid #000;background:#fff;padding:3px 8px}
+.topBtn:hover{background:#eee}
+#speedWrap{display:flex;align-items:center;gap:4px;border:1px solid #000;padding:2px 6px}
+#speedWrap input[type=range]{width:80px}
+#speedLabel{min-width:20px;text-align:center}
+#autoWrap{display:flex;align-items:center;gap:4px;border:1px solid #000;padding:2px 6px}
+#spacer{flex:1}
 
-button,select{
-    background:white;
-    color:black;
-    border:1px solid black;
-    padding:5px 8px;
-    font-family:Arial,sans-serif;
-    cursor:pointer;
-}
+/* ============ MAIN ============ */
+#main{flex:1;min-height:0;display:flex}
+#canvasWrap{position:relative;flex:1;min-width:0;overflow:hidden;background:#fff}
+canvas{position:absolute;inset:0;width:100%;height:100%}
 
-button:hover{
-    background:#eee;
-}
+/* ============ TOWER PANEL ============ */
+#towerPanel{width:280px;flex:0 0 280px;border-left:1px solid #000;display:flex;flex-direction:column;z-index:15}
+#towerHeader{padding:8px;border-bottom:1px solid #000}
+#towerHeader h2{margin:0 0 6px;font-size:15px}
+#filters{display:flex;flex-wrap:wrap;gap:4px}
+.filterBtn{border:1px solid #000;background:#fff;padding:3px 7px;font-size:11px}
+.filterBtn.active{background:#000;color:#fff}
+#towerList{flex:1;overflow-y:auto;padding:6px}
+.towerCard{border:1px solid #000;padding:7px;margin-bottom:6px}
+.towerCard:hover{background:#f2f2f2}
+.towerCard.selected{background:#e6e6e6;border-width:2px}
+.towerCard.disabled{opacity:.4;cursor:not-allowed}
+.towerTop{display:flex;align-items:center;gap:7px}
+.towerIcon{width:26px;height:26px;border:1px solid #000;display:grid;place-items:center;font-weight:bold;font-size:13px;flex:0 0 26px}
+.towerName{font-weight:bold;flex:1;font-size:13px}
+.limit{font-size:11px}
+.towerDesc{font-size:11px;margin-top:4px;line-height:1.3}
+.towerCost{margin-top:5px;font-size:11px}
 
-button:disabled{
-    color:#999;
-    cursor:not-allowed;
+/* ============ SELECTED INFO / UPGRADE PANEL ============ */
+#selectedInfo{
+    position:absolute;left:8px;top:8px;background:#fff;border:1px solid #000;
+    padding:9px;width:225px;z-index:8;display:none;font-size:12px;
 }
+#selectedInfo b{display:block;margin-bottom:5px;font-size:14px}
+#selectedInfo .row{margin-bottom:3px}
+.pathBox{border:1px solid #000;padding:6px;margin-top:7px}
+.pathBox h4{margin:0 0 4px;font-size:11.5px}
+.pathTier{font-size:10.5px;margin-bottom:4px;line-height:1.3}
+.upgBtn{width:100%;border:1px solid #000;background:#fff;padding:4px 6px;font-size:11px;margin-top:2px}
+.upgBtn:hover{background:#eee}
+.upgBtn:disabled{opacity:.4;cursor:not-allowed}
+.sellBtn{width:100%;border:1px solid #000;background:#fff;padding:5px;font-size:11.5px;margin-top:8px}
+.sellBtn:hover{background:#eee}
+.blessTag{display:inline-block;margin-top:6px;padding:1px 5px;border:1px solid #000;font-size:10px}
 
-#menu{
-    padding:25px;
-}
+/* ============ BOTTOM / MESSAGE ============ */
+#bottom{position:absolute;left:8px;right:8px;bottom:8px;pointer-events:none;z-index:10}
+#message{display:inline-block;background:#fff;border:1px solid #000;padding:5px 8px;font-size:12.5px}
+#startWave{position:absolute;right:8px;bottom:8px;z-index:12;border:1px solid #000;background:#fff;padding:8px 14px}
+#startWave:hover{background:#eee}
+#startWave:disabled{opacity:.4;cursor:not-allowed}
+#help{position:absolute;right:8px;top:8px;background:#fff;border:1px solid #000;padding:5px 8px;font-size:10.5px;pointer-events:none;text-align:right}
 
-#menu h1{
-    margin-top:0;
+/* ============ MENU ============ */
+#menuOverlay{
+    position:absolute;inset:0;background:#fff;z-index:100;display:flex;align-items:center;justify-content:center;
 }
+#menuOverlay.hidden{display:none}
+#menuBox{width:640px;max-width:92vw;border:1px solid #000;padding:24px}
+#menuBox h1{margin:0 0 4px;font-size:24px}
+#menuBox .sub{font-size:13px;margin-bottom:18px}
+.menuSection{margin-bottom:16px}
+.menuSection h3{margin:0 0 7px;font-size:13px;text-transform:uppercase}
+.optGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.optBtn{border:1px solid #000;background:#fff;padding:10px 6px;text-align:center;font-size:12.5px}
+.optBtn:hover{background:#eee}
+.optBtn.active{background:#000;color:#fff}
+.optBtn .big{display:block;font-size:14px;font-weight:bold;margin-bottom:3px}
+.optBtn small{font-size:10.5px}
+#menuSummary{margin:12px 0;padding:8px 10px;border:1px solid #000;font-size:12.5px;min-height:18px}
+#startGameBtn{width:100%;border:1px solid #000;background:#fff;padding:12px;font-size:15px;font-weight:bold}
+#startGameBtn:hover{background:#eee}
+#startGameBtn:disabled{opacity:.4;cursor:not-allowed}
 
-.menuSection{
-    margin:15px 0;
+/* ============ PAUSE OVERLAY ============ */
+#pauseOverlay{
+    position:absolute;inset:0;background:rgba(255,255,255,.9);z-index:90;display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:10px;
 }
-
-#menuSelection{
-    margin-top:15px;
-    font-weight:bold;
-}
-
-#startButton{
-    display:block;
-    margin-top:20px;
-    font-size:18px;
-    padding:9px 25px;
-}
-
-#game{
-    display:none;
-}
-
-#top{
-    border-bottom:1px solid black;
-    padding:5px;
-    display:flex;
-    gap:7px;
-    align-items:center;
-    flex-wrap:wrap;
-}
-
-#towers{
-    border-bottom:1px solid black;
-    padding:5px;
-    display:flex;
-    gap:4px;
-    flex-wrap:wrap;
-    max-height:125px;
-    overflow-y:auto;
-}
-
-#controls{
-    border-bottom:1px solid black;
-    padding:5px;
-    display:flex;
-    gap:5px;
-    align-items:center;
-    flex-wrap:wrap;
-}
-
-#upgradeBox{
-    display:none;
-    gap:4px;
-    flex-wrap:wrap;
-}
-
-#selected{
-    margin-left:5px;
-}
-
-#towerInfo{
-    display:none;
-    border-bottom:1px solid black;
-    padding:5px;
-    font-size:13px;
-}
-
-canvas{
-    display:block;
-    margin:5px;
-    border:1px solid black;
-    background:white;
-}
+#pauseOverlay.show{display:flex}
+#pauseOverlay .pauseBtn{border:1px solid #000;background:#fff;padding:10px 24px;font-size:14px;width:220px}
+#pauseOverlay .pauseBtn:hover{background:#eee}
+#pauseOverlay h2{margin:0 0 6px;font-size:22px}
 </style>
 </head>
-
 <body>
-
-<div id="menu">
-
-<h1>letter tower defence</h1>
-
-<div class="menuSection">
-<b>difficulty:</b><br><br>
-
-<button onclick="setDifficulty('easy')">easy</button>
-<button onclick="setDifficulty('normal')">normal</button>
-<button onclick="setDifficulty('hard')">hard</button>
-<button onclick="setDifficulty('insane')">insane</button>
-</div>
-
-<div class="menuSection">
-<b>map:</b><br><br>
-
-<button onclick="setMap(0)">map 1</button>
-<button onclick="setMap(1)">map 2</button>
-<button onclick="setMap(2)">map 3</button>
-<button onclick="setMap(3)">map 4</button>
-</div>
-
-<div id="menuSelection">
-Selected: normal, map 1
-</div>
-
-<button id="startButton" onclick="startGame()">
-START GAME
-</button>
-
-</div>
-
-
 <div id="game">
 
-<div id="top">
-
-<button onclick="restartGame()">Restart</button>
-<button onclick="togglePause()">Pause</button>
-<button onclick="backToMenu()">Menu</button>
-
-<span id="money">Money: 0</span>
-<span id="hp">HP: 0</span>
-<span id="wave">Wave: 0</span>
-<span id="alive">Enemies: 0</span>
-
-<label>
-Speed:
-<select onchange="gameSpeed=Number(this.value)">
-<option value="1">1x</option>
-<option value="2">2x</option>
-<option value="3">3x</option>
-<option value="4">4x</option>
-</select>
-</label>
-
-<button onclick="toggleAutoplay()">
-Autoplay: <span id="auto">ON</span>
-</button>
-
+<div id="topbar">
+    <div id="title">LINE DEFENSE</div>
+    <button class="topBtn" id="restartBtn">⟲ Restart</button>
+    <button class="topBtn" id="pauseBtn">⏸ Pause</button>
+    <button class="topBtn" id="menuBtn">☰ Menu</button>
+    <div id="spacer"></div>
+    <div class="stat">💰 <span id="money">0</span></div>
+    <div class="stat">❤️ <span id="lives">0</span></div>
+    <div class="stat">🌊 Wave <span id="wave">0</span></div>
+    <div id="speedWrap">
+        <span style="font-size:11px">Speed</span>
+        <input type="range" id="speedSlider" min="1" max="4" step="1" value="1">
+        <span id="speedLabel">1x</span>
+    </div>
+    <label id="autoWrap"><input type="checkbox" id="autoToggle"> Autoplay</label>
 </div>
 
-<div id="towers"></div>
+<div id="main">
+<div id="canvasWrap">
+    <canvas id="canvas"></canvas>
+    <div id="selectedInfo"></div>
+    <div id="help">Select a tower → click a valid spot<br>Right-click a placed tower to sell</div>
+    <button id="startWave">START WAVE</button>
+    <div id="bottom"><div id="message">Build your defenses.</div></div>
 
-<div id="controls">
-
-<button onclick="startWave()">Start Wave</button>
-
-<button
-id="sellButton"
-style="display:none"
-onclick="sellTower()">
-Sell
-</button>
-
-<div id="upgradeBox">
-
-<button id="upgrade0" onclick="upgradeTower(0)">
-Path 1
-</button>
-
-<button id="upgrade1" onclick="upgradeTower(1)">
-Path 2
-</button>
-
-<button id="upgrade2" onclick="upgradeTower(2)">
-Ability
-</button>
-
+    <div id="pauseOverlay">
+        <h2>Paused</h2>
+        <button class="pauseBtn" id="resumeBtn">Resume</button>
+        <button class="pauseBtn" id="restartFromPauseBtn">Restart Level</button>
+        <button class="pauseBtn" id="menuFromPauseBtn">Back to Menu</button>
+    </div>
 </div>
 
-<button
-id="abilityButton"
-style="display:none"
-onclick="activateAbility()">
-Ability
-</button>
-
-<span id="selected"></span>
-
+<aside id="towerPanel">
+    <div id="towerHeader">
+        <h2>Towers</h2>
+        <div id="filters">
+            <button class="filterBtn active" data-filter="all">All</button>
+            <button class="filterBtn" data-filter="damage">Damage</button>
+            <button class="filterBtn" data-filter="support">Support</button>
+            <button class="filterBtn" data-filter="farm">Farm</button>
+            <button class="filterBtn" data-filter="special">Special</button>
+            <button class="filterBtn" data-filter="water">Water</button>
+        </div>
+    </div>
+    <div id="towerList"></div>
+</aside>
+</div>
 </div>
 
-<div id="towerInfo"></div>
+<div id="menuOverlay">
+    <div id="menuBox">
+        <h1>LINE DEFENSE</h1>
+        <div class="sub">Pick a difficulty and a route, then start.</div>
 
-<canvas id="canvas" width="1500" height="850"></canvas>
+        <div class="menuSection">
+            <h3>Difficulty</h3>
+            <div class="optGrid" id="diffGrid"></div>
+        </div>
 
+        <div class="menuSection">
+            <h3>Route</h3>
+            <div class="optGrid" id="levelGrid"></div>
+        </div>
+
+        <div id="menuSummary">Select a difficulty and a route.</div>
+        <button id="startGameBtn" disabled>START GAME</button>
+    </div>
 </div>
 
+</div>
 
 <script>
+"use strict";
 
 /* =========================================================
-                         CORE STATE
+   CONSTANTS: DIFFICULTY / LEVELS
 ========================================================= */
 
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
+const difficulties = {
+    easy:   {name:"Easy",   startLives:200, enemyMult:.85, icon:"🟢"},
+    normal: {name:"Normal", startLives:100, enemyMult:1,   icon:"🔵"},
+    hard:   {name:"Hard",   startLives:50,  enemyMult:1.35,icon:"🟠"},
+    insane: {name:"Insane", startLives:1,   enemyMult:1.8, icon:"🔴"}
+};
 
-let gameRunning=false;
-let paused=false;
-let autoplay=true;
-let gameSpeed=1;
-
-let difficulty="normal";
-let mapNumber=0;
-
-let money=650;
-let hp=100;
-let wave=0;
-
-let towers=[];
-let enemies=[];
-let bullets=[];
-let visualEffects=[];
-
-let selectedTowerType=null;
-let selectedTower=null;
-
-let waveActive=false;
-let spawnQueue=[];
-let spawnTimer=0;
-
-let mouseX=0;
-let mouseY=0;
-
-let lastTime=performance.now();
-
-let autoplayTimer=0;
-
-
-/* =========================================================
-                       DIFFICULTIES
-========================================================= */
-
-const difficultyData={
-
-    easy:{
-        money:800,
-        hp:200,
-        enemyScale:.75,
-        enemySpeed:.85,
-        reward:1.2
+const levels = [
+    {
+        name:"Level 1 · Straight Line",
+        path:[
+            {x:0,y:.5},{x:.15,y:.5},{x:.15,y:.2},{x:.4,y:.2},{x:.4,y:.8},
+            {x:.65,y:.8},{x:.65,y:.35},{x:.85,y:.35},{x:.85,y:.65},{x:1,y:.65}
+        ],
+        water:[{x:.5,y:.55,w:.15,h:.14}]
     },
-
-    normal:{
-        money:650,
-        hp:100,
-        enemyScale:1,
-        enemySpeed:1,
-        reward:1
+    {
+        name:"Level 2 · Zig Zag",
+        path:[
+            {x:0,y:.15},{x:.2,y:.15},{x:.2,y:.85},{x:.35,y:.85},{x:.35,y:.35},
+            {x:.5,y:.35},{x:.5,y:.9},{x:.68,y:.9},{x:.68,y:.1},{x:.85,y:.1},
+            {x:.85,y:.55},{x:1,y:.55}
+        ],
+        water:[{x:.42,y:.5,w:.14,h:.13}]
     },
-
-    hard:{
-        money:500,
-        hp:50,
-        enemyScale:1.35,
-        enemySpeed:1.12,
-        reward:.9
+    {
+        name:"Level 3 · Twin Lakes",
+        path:[
+            {x:0,y:.5},{x:.12,y:.5},{x:.12,y:.12},{x:.55,y:.12},{x:.55,y:.5},
+            {x:.3,y:.5},{x:.3,y:.85},{x:.75,y:.85},{x:.75,y:.3},{x:.9,y:.3},
+            {x:.9,y:.65},{x:1,y:.65}
+        ],
+        water:[{x:.4,y:.62,w:.12,h:.12},{x:.62,y:.15,w:.11,h:.1}]
     },
-
-    insane:{
-        money:350,
-        hp:1,
-        enemyScale:1.8,
-        enemySpeed:1.28,
-        reward:.75
+    {
+        name:"Level 4 · Canyon Run",
+        path:[
+            {x:0,y:.3},{x:.3,y:.3},{x:.3,y:.75},{x:.55,y:.75},{x:.55,y:.15},
+            {x:.8,y:.15},{x:.8,y:.55},{x:1,y:.55}
+        ],
+        water:[{x:.62,y:.65,w:.14,h:.16}]
     }
-
-};
-
-
-/* =========================================================
-                           MAPS
-========================================================= */
-
-const maps=[
-
-[
-[55,110],
-[240,110],
-[240,270],
-[470,270],
-[470,90],
-[740,90],
-[740,300],
-[980,300],
-[980,150],
-[1220,150],
-[1220,400],
-[1400,400],
-[1400,680],
-[1160,680],
-[1160,520],
-[900,520],
-[900,760],
-[620,760],
-[620,560],
-[370,560],
-[370,700],
-[55,700]
-],
-
-[
-[55,100],
-[280,100],
-[280,290],
-[110,290],
-[110,500],
-[380,500],
-[380,690],
-[650,690],
-[650,500],
-[530,500],
-[530,340],
-[800,340],
-[800,110],
-[1060,110],
-[1060,280],
-[1320,280],
-[1320,520],
-[1110,520],
-[1110,720],
-[800,720]
-],
-
-[
-[60,730],
-[60,540],
-[300,540],
-[300,730],
-[520,730],
-[520,430],
-[300,430],
-[300,170],
-[570,170],
-[570,330],
-[820,330],
-[820,80],
-[1060,80],
-[1060,300],
-[1300,300],
-[1300,590],
-[1060,590],
-[1060,760],
-[800,760],
-[800,600],
-[550,600]
-],
-
-[
-[60,100],
-[260,100],
-[260,250],
-[450,250],
-[450,80],
-[700,80],
-[700,300],
-[900,300],
-[900,150],
-[1160,150],
-[1160,390],
-[1340,390],
-[1340,700],
-[1080,700],
-[1080,520],
-[800,520],
-[800,750],
-[500,750],
-[500,560],
-[280,560],
-[280,720],
-[60,720]
-]
-
 ];
 
-const waterMaps=[
-
-[
-{x:930,y:575,w:190,h:105}
-],
-
-[
-{x:400,y:110,w:175,h:115}
-],
-
-[
-{x:620,y:120,w:180,h:110},
-{x:1080,y:610,w:190,h:105}
-],
-
-[
-{x:960,y:575,w:190,h:110}
-]
-
-];
-
-let path=maps[0];
-let water=waterMaps[0];
-
-
 /* =========================================================
-                     TOWER DATABASE
+   GAME / DOM STATE
 ========================================================= */
 
-const towerTypes={
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-dart:{
-name:"dart",
-cost:100,
-range:150,
-fireRate:500,
-damage:2,
-projectile:"dart",
-land:true,
-max:20
-},
+let W=1000, H=700;
 
-gun:{
-name:"gun",
-cost:180,
-range:190,
-fireRate:250,
-damage:1,
-projectile:"bullet",
-land:true,
-max:20
-},
-
-cannon:{
-name:"cannon",
-cost:300,
-range:180,
-fireRate:1300,
-damage:7,
-splash:65,
-projectile:"bomb",
-bomb:true,
-land:true,
-max:20
-},
-
-ice:{
-name:"ice",
-cost:260,
-range:130,
-fireRate:900,
-damage:1,
-slow:.55,
-projectile:"ice",
-land:true,
-max:20
-},
-
-sniper:{
-name:"sniper",
-cost:450,
-range:420,
-fireRate:1600,
-damage:12,
-projectile:"bullet",
-camo:true,
-antiAir:true,
-land:true,
-max:20
-},
-
-laser:{
-name:"laser",
-cost:650,
-range:240,
-fireRate:100,
-damage:2,
-projectile:"laser",
-camo:true,
-antiAir:true,
-land:true,
-max:20
-},
-
-farm:{
-name:"farm",
-cost:350,
-income:35,
-land:true,
-farm:true,
-max:20
-},
-
-waterGun:{
-name:"water gun",
-cost:300,
-range:170,
-fireRate:400,
-damage:3,
-projectile:"water",
-water:true,
-antiAir:true,
-max:20
-},
-
-depth:{
-name:"depth",
-cost:600,
-range:260,
-fireRate:850,
-damage:14,
-projectile:"depth",
-bomb:true,
-water:true,
-antiAir:true,
-max:20
-},
-
-electric:{
-name:"electric",
-cost:500,
-range:180,
-fireRate:700,
-damage:5,
-projectile:"electric",
-land:true,
-max:20
-},
-
-fire:{
-name:"fire",
-cost:550,
-range:180,
-fireRate:800,
-damage:6,
-projectile:"fire",
-bomb:true,
-land:true,
-max:20
-},
-
-storm:{
-name:"storm",
-cost:900,
-range:300,
-fireRate:600,
-damage:9,
-projectile:"storm",
-water:true,
-antiAir:true,
-max:20
-},
-
-poison:{
-name:"poison",
-cost:700,
-range:210,
-fireRate:1000,
-damage:8,
-projectile:"poison",
-land:true,
-max:20
-},
-
-missile:{
-name:"missile",
-cost:1100,
-range:350,
-fireRate:1500,
-damage:30,
-splash:80,
-projectile:"missile",
-bomb:true,
-antiAir:true,
-camo:true,
-land:true,
-max:20
-},
-
-machine:{
-name:"machine",
-cost:750,
-range:220,
-fireRate:120,
-damage:2,
-projectile:"bullet",
-antiAir:true,
-land:true,
-max:20
-},
-
-mortar:{
-name:"mortar",
-cost:800,
-range:330,
-fireRate:1800,
-damage:22,
-splash:95,
-projectile:"bomb",
-bomb:true,
-land:true,
-max:20
-},
-
-boomerang:{
-name:"boomerang",
-cost:400,
-range:190,
-fireRate:650,
-damage:8,
-projectile:"boomerang",
-antiAir:true,
-land:true,
-max:20
-},
-
-glue:{
-name:"glue",
-cost:350,
-range:155,
-fireRate:800,
-damage:1,
-slow:.35,
-projectile:"glue",
-land:true,
-max:20
-},
-
-beacon:{
-name:"beacon",
-cost:900,
-range:260,
-support:true,
-land:true,
-max:20
-},
-
-healer:{
-name:"healer",
-cost:650,
-range:210,
-support:true,
-land:true,
-max:20
-},
-
-plasma:{
-name:"plasma",
-cost:1300,
-range:280,
-fireRate:260,
-damage:15,
-projectile:"plasma",
-antiAir:true,
-camo:true,
-land:true,
-max:20
-},
-
-railgun:{
-name:"railgun",
-cost:1800,
-range:520,
-fireRate:2400,
-damage:75,
-projectile:"rail",
-antiAir:true,
-camo:true,
-bomb:true,
-land:true,
-max:20
-},
-
-volcano:{
-name:"volcano",
-cost:1600,
-range:240,
-fireRate:1000,
-damage:25,
-splash:110,
-projectile:"fire",
-bomb:true,
-land:true,
-max:20
-},
-
-tesla:{
-name:"tesla",
-cost:1200,
-range:230,
-fireRate:500,
-damage:11,
-projectile:"electric",
-antiAir:true,
-land:true,
-max:20
-},
-
-frost:{
-name:"frost",
-cost:1000,
-range:200,
-fireRate:700,
-damage:5,
-slow:.25,
-projectile:"ice",
-land:true,
-max:20
-},
-
-harpoon:{
-name:"harpoon",
-cost:700,
-range:300,
-fireRate:900,
-damage:18,
-projectile:"harpoon",
-water:true,
-antiAir:true,
-max:20
-},
-
-whirlpool:{
-name:"whirlpool",
-cost:1400,
-range:280,
-fireRate:1100,
-damage:28,
-splash:75,
-projectile:"water",
-water:true,
-antiAir:true,
-max:20
-},
-
-submarine:{
-name:"submarine",
-cost:1500,
-range:360,
-fireRate:700,
-damage:20,
-projectile:"missile",
-water:true,
-antiAir:true,
-camo:true,
-bomb:true,
-max:20
-},
-
-sonar:{
-name:"sonar",
-cost:800,
-range:300,
-support:true,
-water:true,
-max:20
-},
-
-moneybox:{
-name:"moneybox",
-cost:800,
-income:90,
-farm:true,
-land:true,
-max:20
-},
-
-bank:{
-name:"bank",
-cost:1500,
-income:190,
-farm:true,
-land:true,
-max:20
-},
-
-meteor:{
-name:"meteor",
-cost:2500,
-range:420,
-fireRate:3200,
-damage:110,
-splash:140,
-projectile:"meteor",
-bomb:true,
-antiAir:true,
-land:true,
-max:20
-},
-
-bigCannon:{
-name:"big cannon",
-cost:1000,
-range:220,
-fireRate:1100,
-damage:35,
-splash:85,
-projectile:"bomb",
-bomb:true,
-land:true,
-max:20
-},
-
-chain:{
-name:"chain",
-cost:950,
-range:200,
-fireRate:450,
-damage:7,
-projectile:"electric",
-antiAir:true,
-land:true,
-max:20
-},
-
-thorn:{
-name:"thorn",
-cost:600,
-range:170,
-fireRate:500,
-damage:10,
-projectile:"thorn",
-land:true,
-max:20
-},
-
-wind:{
-name:"wind",
-cost:550,
-range:180,
-fireRate:900,
-damage:2,
-slow:.4,
-projectile:"wind",
-antiAir:true,
-land:true,
-max:20
-},
-
-rock:{
-name:"rock",
-cost:120,
-range:120,
-fireRate:900,
-damage:8,
-projectile:"rock",
-land:true,
-max:20
-},
-
-sword:{
-name:"sword",
-cost:220,
-range:90,
-fireRate:400,
-damage:9,
-projectile:"sword",
-land:true,
-max:20
-},
-
-archer:{
-name:"archer",
-cost:250,
-range:220,
-fireRate:600,
-damage:5,
-projectile:"arrow",
-antiAir:true,
-land:true,
-max:20
-},
-
-catapult:{
-name:"catapult",
-cost:500,
-range:290,
-fireRate:1500,
-damage:20,
-splash:70,
-projectile:"rock",
-bomb:true,
-land:true,
-max:20
-},
-
-fireball:{
-name:"fireball",
-cost:850,
-range:240,
-fireRate:700,
-damage:14,
-splash:60,
-projectile:"fireball",
-bomb:true,
-land:true,
-max:20
-},
-
-freezeRay:{
-name:"freeze ray",
-cost:1200,
-range:260,
-fireRate:850,
-damage:7,
-slow:.15,
-projectile:"ice",
-land:true,
-max:20
-},
-
-blackHole:{
-name:"black hole",
-cost:3000,
-range:330,
-fireRate:3000,
-damage:100,
-splash:150,
-projectile:"blackhole",
-land:true,
-bomb:true,
-antiAir:true,
-camo:true,
-max:20
-},
-
-generator:{
-name:"generator",
-cost:1000,
-income:125,
-farm:true,
-land:true,
-max:20
-},
-
-factory:{
-name:"factory",
-cost:2200,
-income:300,
-farm:true,
-land:true,
-max:20
-},
-
-waterMine:{
-name:"water mine",
-cost:500,
-range:180,
-fireRate:1200,
-damage:25,
-splash:70,
-projectile:"water",
-bomb:true,
-water:true,
-max:20
-},
-
-shark:{
-name:"shark",
-cost:1000,
-range:230,
-fireRate:500,
-damage:15,
-projectile:"shark",
-water:true,
-antiAir:true,
-max:20
-},
-
-octopus:{
-name:"octopus",
-cost:1800,
-range:300,
-fireRate:800,
-damage:22,
-projectile:"tentacle",
-water:true,
-antiAir:true,
-max:20
-},
-
-gravity:{
-name:"gravity",
-cost:2000,
-range:300,
-fireRate:1200,
-damage:30,
-slow:.3,
-projectile:"gravity",
-land:true,
-antiAir:true,
-max:20
-},
-
-nuke:{
-name:"nuke",
-cost:5000,
-range:500,
-fireRate:6000,
-damage:300,
-splash:250,
-projectile:"nuke",
-bomb:true,
-antiAir:true,
-camo:true,
-land:true,
-max:20
+function resize(){
+    const rect = canvas.getBoundingClientRect();
+    W = Math.max(600, rect.width);
+    H = Math.max(400, rect.height);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
 }
+window.addEventListener("resize",resize);
+resize();
 
-};
+let gameState = "menu"; // menu | playing | paused
+let chosenDiff = null;
+let chosenLevel = null;
 
+let money=500, lives=100, wave=0;
+let gameSpeed=1;
+let waveRunning=false;
+let waveTimer=0, spawnTimer=0;
+let autoplay=false, autoplayTimer=0;
+let selectedTowerType=null, selectedTower=null;
+let currentFilter="all";
+
+let towers=[], enemies=[], projectiles=[], particles=[];
+let currentPath=[], currentWater=[];
+let difficultyData=null;
 
 /* =========================================================
-                     UPGRADE PATHS
-=========================================================
-
-Each tower has three independent paths.
-
-Path 1 = primary offensive specialization.
-Path 2 = range / speed / utility specialization.
-Path 3 = ability path.
-
-The third path unlocks an active special ability at
-tier 3 and improves that ability at later tiers.
+   MENU UI
 ========================================================= */
 
-const defaultUpgrades={
+const diffGrid = document.getElementById("diffGrid");
+const levelGrid = document.getElementById("levelGrid");
+const menuSummary = document.getElementById("menuSummary");
+const startGameBtn = document.getElementById("startGameBtn");
 
-path1:[
-{
-name:"stronger",
-cost:120,
-damage:1.30
-},
-{
-name:"heavy",
-cost:220,
-damage:1.70
-},
-{
-name:"massive",
-cost:400,
-damage:2.20
-},
-{
-name:"devastating",
-cost:700,
-damage:3.00
-},
-{
-name:"overwhelming",
-cost:1200,
-damage:4.20
-}
-],
+Object.entries(difficulties).forEach(([key,d])=>{
+    const btn=document.createElement("button");
+    btn.className="optBtn";
+    btn.innerHTML=`<span class="big">${d.icon} ${d.name}</span><small>${d.startLives} HP</small>`;
+    btn.addEventListener("click",()=>{
+        chosenDiff=key;
+        [...diffGrid.children].forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        updateMenuSummary();
+    });
+    diffGrid.appendChild(btn);
+});
 
-path2:[
-{
-name:"range",
-cost:120,
-range:1.15
-},
-{
-name:"fast",
-cost:220,
-rate:.82
-},
-{
-name:"very fast",
-cost:400,
-rate:.68
-},
-{
-name:"precision",
-cost:700,
-range:1.30,
-rate:.75
-},
-{
-name:"master",
-cost:1200,
-range:1.55,
-rate:.60
-}
-],
+levels.forEach((lvl,i)=>{
+    const btn=document.createElement("button");
+    btn.className="optBtn";
+    btn.innerHTML=`<span class="big">Route ${i+1}</span><small>${lvl.name.split("·")[1]||""}</small>`;
+    btn.addEventListener("click",()=>{
+        chosenLevel=i;
+        [...levelGrid.children].forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        updateMenuSummary();
+    });
+    levelGrid.appendChild(btn);
+});
 
-path3:[
-{
-name:"ability",
-cost:170
-},
-{
-name:"ability improved",
-cost:300
-},
-{
-name:"special ability",
-cost:550,
-ability:true
-},
-{
-name:"enhanced ability",
-cost:900,
-abilityPower:1.5
-},
-{
-name:"ultimate ability",
-cost:1600,
-abilityPower:2.2
-}
-]
-
-};
-
-
-/*
-  Tower-specific upgrade themes.
-  The underlying mechanics remain compatible with every tower.
-*/
-
-const upgradeThemes={
-
-dart:{
-p1:"damage",
-p2:"precision",
-p3:"rain"
-},
-
-gun:{
-p1:"damage",
-p2:"rapid",
-p3:"overload"
-},
-
-cannon:{
-p1:"explosion",
-p2:"range",
-p3:"artillery"
-},
-
-ice:{
-p1:"freeze",
-p2:"range",
-p3:"blizzard"
-},
-
-sniper:{
-p1:"critical",
-p2:"precision",
-p3:"execution"
-},
-
-laser:{
-p1:"beam",
-p2:"range",
-p3:"laserstorm"
-},
-
-farm:{
-p1:"income",
-p2:"income",
-p3:"cashburst"
-},
-
-waterGun:{
-p1:"pressure",
-p2:"range",
-p3:"flood"
-},
-
-depth:{
-p1:"torpedo",
-p2:"range",
-p3:"depthcharge"
-},
-
-electric:{
-p1:"voltage",
-p2:"chain",
-p3:"storm"
-},
-
-fire:{
-p1:"heat",
-p2:"range",
-p3:"inferno"
-},
-
-storm:{
-p1:"storm",
-p2:"range",
-p3:"hurricane"
-},
-
-poison:{
-p1:"toxin",
-p2:"range",
-p3:"plague"
-},
-
-missile:{
-p1:"warhead",
-p2:"targeting",
-p3:"barrage"
-},
-
-machine:{
-p1:"caliber",
-p2:"rate",
-p3:"bulletstorm"
-},
-
-mortar:{
-p1:"shell",
-p2:"range",
-p3:"bombardment"
-},
-
-boomerang:{
-p1:"sharp",
-p2:"return",
-p3:"boomerangstorm"
-},
-
-glue:{
-p1:"sticky",
-p2:"range",
-p3:"gluestorm"
-},
-
-beacon:{
-p1:"power",
-p2:"range",
-p3:"overcharge"
-},
-
-healer:{
-p1:"heal",
-p2:"range",
-p3:"emergency"
-},
-
-plasma:{
-p1:"plasma",
-p2:"range",
-p3:"singularity"
-},
-
-railgun:{
-p1:"rail",
-p2:"precision",
-p3:"railstorm"
-},
-
-volcano:{
-p1:"lava",
-p2:"range",
-p3:"eruption"
-},
-
-tesla:{
-p1:"voltage",
-p2:"chain",
-p3:"thunder"
-},
-
-frost:{
-p1:"freeze",
-p2:"range",
-p3:"absolutezero"
-},
-
-harpoon:{
-p1:"harpoon",
-p2:"range",
-p3:"whalehunter"
-},
-
-whirlpool:{
-p1:"vortex",
-p2:"range",
-p3:"maelstrom"
-},
-
-submarine:{
-p1:"torpedo",
-p2:"stealth",
-p3:"depthstrike"
-},
-
-sonar:{
-p1:"sonar",
-p2:"range",
-p3:"reveal"
-},
-
-moneybox:{
-p1:"income",
-p2:"income",
-p3:"moneyrain"
-},
-
-bank:{
-p1:"interest",
-p2:"vault",
-p3:"bankrun"
-},
-
-meteor:{
-p1:"meteor",
-p2:"range",
-p3:"meteorshower"
-},
-
-bigCannon:{
-p1:"shell",
-p2:"range",
-p3:"superblast"
-},
-
-chain:{
-p1:"voltage",
-p2:"chain",
-p3:"chainreaction"
-},
-
-thorn:{
-p1:"thorns",
-p2:"range",
-p3:"bramble"
-},
-
-wind:{
-p1:"wind",
-p2:"range",
-p3:"tornado"
-},
-
-rock:{
-p1:"rock",
-p2:"range",
-p3:"rockslide"
-},
-
-sword:{
-p1:"blade",
-p2:"speed",
-p3:"slashes"
-},
-
-archer:{
-p1:"arrows",
-p2:"precision",
-p3:"arrowstorm"
-},
-
-catapult:{
-p1:"stone",
-p2:"range",
-p3:"cataclysm"
-},
-
-fireball:{
-p1:"fire",
-p2:"range",
-p3:"firestorm"
-},
-
-freezeRay:{
-p1:"freeze",
-p2:"range",
-p3:"flashfreeze"
-},
-
-blackHole:{
-p1:"gravity",
-p2:"range",
-p3:"singularity"
-},
-
-generator:{
-p1:"power",
-p2:"efficiency",
-p3:"powerburst"
-},
-
-factory:{
-p1:"production",
-p2:"efficiency",
-p3:"productionburst"
-},
-
-waterMine:{
-p1:"explosive",
-p2:"range",
-p3:"minesurge"
-},
-
-shark:{
-p1:"bite",
-p2:"speed",
-p3:"sharkstorm"
-},
-
-octopus:{
-p1:"tentacles",
-p2:"range",
-p3:"kraken"
-},
-
-gravity:{
-p1:"gravity",
-p2:"range",
-p3:"blackout"
-},
-
-nuke:{
-p1:"warhead",
-p2:"targeting",
-p3:"apocalypse"
+function updateMenuSummary(){
+    if(chosenDiff && chosenLevel!==null){
+        menuSummary.textContent=`Selected: ${difficulties[chosenDiff].name} difficulty on ${levels[chosenLevel].name}.`;
+        startGameBtn.disabled=false;
+    }else if(chosenDiff){
+        menuSummary.textContent=`Selected: ${difficulties[chosenDiff].name} difficulty. Now pick a route.`;
+        startGameBtn.disabled=true;
+    }else if(chosenLevel!==null){
+        menuSummary.textContent=`Selected: ${levels[chosenLevel].name}. Now pick a difficulty.`;
+        startGameBtn.disabled=true;
+    }else{
+        menuSummary.textContent="Select a difficulty and a route.";
+        startGameBtn.disabled=true;
+    }
 }
 
-};
+startGameBtn.addEventListener("click",()=>{
+    beginNewGame();
+});
 
+document.getElementById("menuBtn").addEventListener("click",()=>openMenu());
+document.getElementById("menuFromPauseBtn").addEventListener("click",()=>openMenu());
+document.getElementById("restartBtn").addEventListener("click",()=>{ if(chosenDiff!==null) beginNewGame(true); });
+document.getElementById("restartFromPauseBtn").addEventListener("click",()=>{ beginNewGame(true); });
+document.getElementById("pauseBtn").addEventListener("click",()=>togglePause());
+document.getElementById("resumeBtn").addEventListener("click",()=>togglePause());
 
-/* =========================================================
-                    TOWER EFFECTS
-========================================================= */
-
-const towerEffects=[
-
-{
-name:"powerful",
-chance:.025,
-description:"+35% damage"
-},
-
-{
-name:"rapid",
-chance:.020,
-description:"+30% attack speed"
-},
-
-{
-name:"long range",
-chance:.020,
-description:"+25% range"
-},
-
-{
-name:"wealthy",
-chance:.015,
-description:"+50% farm income"
-},
-
-{
-name:"unstable",
-chance:.010,
-description:"-20% range, +60% damage"
-},
-
-{
-name:"weak",
-chance:.010,
-description:"-25% damage"
-},
-
-{
-name:"piercing",
-chance:.010,
-description:"ignores part of armor"
-},
-
-{
-name:"lucky",
-chance:.008,
-description:"occasionally deals double damage"
+function openMenu(){
+    gameState="menu";
+    document.getElementById("menuOverlay").classList.remove("hidden");
+    document.getElementById("pauseOverlay").classList.remove("show");
 }
 
-];
-
-
-/* =========================================================
-                       ENEMIES
-========================================================= */
-
-const enemyTypes={
-
-normal:{
-hp:10,
-speed:1,
-reward:8,
-size:15,
-label:"",
-color:"black"
-},
-
-speedy:{
-hp:7,
-speed:2.3,
-reward:10,
-size:14,
-label:"speedy",
-color:"red"
-},
-
-healthy:{
-hp:35,
-speed:.65,
-reward:15,
-size:20,
-label:"healthy",
-color:"darkgreen"
-},
-
-armored:{
-hp:45,
-speed:.7,
-reward:25,
-size:21,
-armor:true,
-label:"armored",
-color:"gray"
-},
-
-bombonly:{
-hp:30,
-speed:.8,
-reward:22,
-size:19,
-bombOnly:true,
-label:"bomb only",
-color:"darkred"
-},
-
-iceproof:{
-hp:28,
-speed:.9,
-reward:20,
-size:18,
-iceImmune:true,
-label:"ice protection",
-color:"blue"
-},
-
-camouflage:{
-hp:22,
-speed:1,
-reward:22,
-size:17,
-camo:true,
-label:"camouflage",
-color:"purple"
-},
-
-regeneration:{
-hp:40,
-speed:.65,
-reward:30,
-size:20,
-regen:true,
-label:"regeneration",
-color:"green"
-},
-
-shielded:{
-hp:35,
-speed:.8,
-reward:30,
-size:20,
-shield:20,
-label:"shielded",
-color:"cyan"
-},
-
-flying:{
-hp:20,
-speed:1.7,
-reward:25,
-size:17,
-flying:true,
-label:"flying",
-color:"orange"
-},
-
-swarm:{
-hp:5,
-speed:2.8,
-reward:4,
-size:10,
-label:"swarm",
-color:"brown"
-},
-
-splitter:{
-hp:50,
-speed:.6,
-reward:35,
-size:22,
-split:true,
-label:"splitter",
-color:"purple"
-},
-
-giant:{
-hp:150,
-speed:.45,
-reward:70,
-size:28,
-label:"giant",
-color:"darkgray"
-},
-
-burning:{
-hp:50,
-speed:.8,
-reward:35,
-size:20,
-fireImmune:true,
-label:"fire immune",
-color:"orangered"
-},
-
-electricEnemy:{
-hp:38,
-speed:.9,
-reward:35,
-size:19,
-electricImmune:true,
-label:"electric immune",
-color:"blue"
-},
-
-waterproof:{
-hp:55,
-speed:.7,
-reward:45,
-size:21,
-waterImmune:true,
-label:"water immune",
-color:"navy"
-},
-
-fastArmor:{
-hp:65,
-speed:1.35,
-reward:55,
-size:21,
-armor:true,
-label:"fast armored",
-color:"gray"
-},
-
-bossArmor:{
-hp:500,
-speed:.35,
-reward:200,
-size:38,
-armor:true,
-bombOnly:false,
-label:"heavy armor",
-color:"darkred"
-},
-
-bossRegeneration:{
-hp:650,
-speed:.30,
-reward:250,
-size:42,
-regen:true,
-label:"regenerating",
-color:"green"
-},
-
-bossCamouflage:{
-hp:700,
-speed:.32,
-reward:300,
-camo:true,
-label:"camouflaged",
-color:"purple"
-},
-
-bossShield:{
-hp:800,
-speed:.30,
-reward:350,
-shield:250,
-label:"shielded",
-color:"cyan"
-},
-
-boss:{
-hp:1000,
-speed:.30,
-reward:500,
-size:48,
-boss:true,
-armor:true,
-label:"BOSS",
-color:"black"
+function togglePause(){
+    if(gameState==="playing"){
+        gameState="paused";
+        document.getElementById("pauseOverlay").classList.add("show");
+        document.getElementById("pauseBtn").textContent="⏸ Pause";
+    }else if(gameState==="paused"){
+        gameState="playing";
+        document.getElementById("pauseOverlay").classList.remove("show");
+    }
 }
 
-};
+function beginNewGame(keepSelection){
+    if(!chosenDiff || chosenLevel===null) return;
 
+    difficultyData = difficulties[chosenDiff];
+    const lvl = levels[chosenLevel];
+    currentPath = lvl.path;
+    currentWater = lvl.water;
 
-/* =========================================================
-                    MENU FUNCTIONS
-========================================================= */
-
-function setDifficulty(value){
-
-    difficulty=value;
-    updateMenu();
-
-}
-
-
-function setMap(value){
-
-    mapNumber=value;
-    updateMenu();
-
-}
-
-
-function updateMenu(){
-
-    document.getElementById("menuSelection").textContent=
-        "Selected: "+
-        difficulty+
-        ", map "+
-        (mapNumber+1);
-
-}
-
-
-/* =========================================================
-                     START / RESTART
-========================================================= */
-
-function startGame(){
-
-    const d=difficultyData[difficulty];
-
-    money=d.money;
-    hp=d.hp;
+    money=500;
+    lives=difficultyData.startLives;
     wave=0;
-
-    towers=[];
-    enemies=[];
-    bullets=[];
-    visualEffects=[];
-
-    selectedTower=null;
-    selectedTowerType=null;
-
-    path=maps[mapNumber];
-    water=waterMaps[mapNumber];
-
-    waveActive=false;
-    spawnQueue=[];
-    spawnTimer=0;
+    waveRunning=false;
+    waveTimer=0; spawnTimer=0;
     autoplayTimer=0;
+    towers=[]; enemies=[]; projectiles=[]; particles=[];
+    selectedTowerType=null; selectedTower=null;
 
-    gameRunning=true;
-    paused=false;
-
-    document.getElementById("menu").style.display="none";
-    document.getElementById("game").style.display="block";
-
-    createTowerButtons();
+    document.getElementById("menuOverlay").classList.add("hidden");
+    document.getElementById("pauseOverlay").classList.remove("show");
+    hideSelectedInfo();
+    setMessage(`${difficultyData.name} · ${lvl.name}. Build your defenses.`);
+    renderTowerList();
     updateUI();
-
+    gameState="playing";
 }
-
-
-function restartGame(){
-
-    startGame();
-
-}
-
-
-function backToMenu(){
-
-    gameRunning=false;
-
-    document.getElementById("game").style.display="none";
-    document.getElementById("menu").style.display="block";
-
-}
-
 
 /* =========================================================
-                    TOWER BUTTONS
+   PATH / WATER HELPERS
 ========================================================= */
 
-function createTowerButtons(){
+function pointOnPath(t){
+    let total=0;
+    for(let i=0;i<currentPath.length-1;i++){
+        const a=currentPath[i],b=currentPath[i+1];
+        total += Math.hypot((b.x-a.x)*W,(b.y-a.y)*H);
+    }
+    let target=t*total;
+    for(let i=0;i<currentPath.length-1;i++){
+        const a=currentPath[i],b=currentPath[i+1];
+        const ax=a.x*W, ay=a.y*H, bx=b.x*W, by=b.y*H;
+        const len=Math.hypot(bx-ax,by-ay);
+        if(target<=len){
+            const p= len===0 ? 0 : target/len;
+            return {x:ax+(bx-ax)*p, y:ay+(by-ay)*p};
+        }
+        target-=len;
+    }
+    const last=currentPath[currentPath.length-1];
+    return {x:last.x*W, y:last.y*H};
+}
 
-    const box=document.getElementById("towers");
+function distanceToPath(x,y){
+    let best=Infinity;
+    for(let i=0;i<currentPath.length-1;i++){
+        const a=currentPath[i],b=currentPath[i+1];
+        const ax=a.x*W, ay=a.y*H, bx=b.x*W, by=b.y*H;
+        const dx=bx-ax, dy=by-ay;
+        const len2=dx*dx+dy*dy;
+        let t= len2===0 ? 0 : ((x-ax)*dx+(y-ay)*dy)/len2;
+        t=Math.max(0,Math.min(1,t));
+        const px=ax+dx*t, py=ay+dy*t;
+        best=Math.min(best,Math.hypot(x-px,y-py));
+    }
+    return best;
+}
 
-    box.innerHTML="";
+function inWater(x,y){
+    for(const r of currentWater){
+        const rx=r.x*W, ry=r.y*H, rw=r.w*W, rh=r.h*H;
+        if(x>=rx && x<=rx+rw && y>=ry && y<=ry+rh) return true;
+    }
+    return false;
+}
 
-    for(const key in towerTypes){
+/* =========================================================
+   TOWER DEFINITIONS
+   Each tower has: category, cost, limit, base stats, flags,
+   and two upgrade paths (A / B), each with 2 tiers.
+   Tier 2 of each path grants a named special ability + visual.
+========================================================= */
 
-        const type=towerTypes[key];
+function stdTiers(baseCost, path){
+    // path: {aName,aDesc1,aDesc2,aSpecial, bName,bDesc1,bDesc2,bSpecial}
+    return path;
+}
 
-        const button=document.createElement("button");
+const towerTypes = {
 
-        button.textContent=
-            type.name+
-            " ($"+
-            type.cost+
-            ")";
+    scout:{
+        name:"Scout", icon:"S", category:"damage", cost:100, limit:14,
+        damage:14, range:135, cooldown:650, projectileSpeed:520, color:"#9fb5c4",
+        desc:"Cheap, reliable single-target damage.",
+        upgrades:{
+            A:{name:"Rapid Fire", color:"#e8a4a4", tiers:[
+                {cost:60, desc:"+30% fire rate", apply:t=>{t.rateMult*=1.3}},
+                {cost:150, desc:"Twin Shot: fires at 2 enemies at once", special:"multishot2", apply:t=>{t.rateMult*=1.15; t.multishot=2}}
+            ]},
+            B:{name:"Heavy Rounds", color:"#c9d6df", tiers:[
+                {cost:60, desc:"+35% damage", apply:t=>{t.dmgMult*=1.35}},
+                {cost:150, desc:"Piercing Rounds: full damage to armored", special:"breaksArmor", apply:t=>{t.dmgMult*=1.2; t.breaksArmor=true}}
+            ]}
+        }
+    },
 
-        button.onclick=function(){
+    sniper:{
+        name:"Sniper", icon:"N", category:"damage", cost:250, limit:8,
+        damage:95, range:300, cooldown:1800, projectileSpeed:800, color:"#b8c6d0",
+        desc:"Very long range, heavy single-target shots.",
+        upgrades:{
+            A:{name:"Precision Scope", color:"#e8d283", tiers:[
+                {cost:150, desc:"+25% range", apply:t=>{t.rangeMult*=1.25}},
+                {cost:320, desc:"Headshot: 25% chance to deal triple damage", special:"crit", apply:t=>{t.critChance=.25; t.critMult=3}}
+            ]},
+            B:{name:"Optic Sight", color:"#c88ee0", tiers:[
+                {cost:150, desc:"Reveals Camouflage enemies", special:"detectCamo", apply:t=>{t.detectsCamo=true}},
+                {cost:320, desc:"Ghost Killer: +80% damage to Camouflage", special:"campKiller", apply:t=>{t.camoBonus=1.8}}
+            ]}
+        }
+    },
+
+    cannon:{
+        name:"Cannon", icon:"C", category:"damage", cost:350, limit:6,
+        damage:65, range:165, cooldown:1450, projectileSpeed:430, splash:48, color:"#a7a7a7",
+        breaksArmor:true,
+        desc:"Explosive shots damage nearby enemies. Breaks armor.",
+        upgrades:{
+            A:{name:"Big Shells", color:"#f0a94e", tiers:[
+                {cost:180, desc:"+40% splash radius", apply:t=>{t.splashMult*=1.4}},
+                {cost:400, desc:"Demolition: +70% damage", special:"demolition", apply:t=>{t.dmgMult*=1.7}}
+            ]},
+            B:{name:"Fast Reload", color:"#9fd4e8", tiers:[
+                {cost:180, desc:"+30% fire rate", apply:t=>{t.rateMult*=1.3}},
+                {cost:400, desc:"Barrage: fires 3 shells per volley", special:"barrage3", apply:t=>{t.multishot=3}}
+            ]}
+        }
+    },
+
+    laser:{
+        name:"Laser", icon:"L", category:"damage", cost:700, limit:4,
+        damage:110, range:180, cooldown:500, projectileSpeed:1000, color:"#d7e1e8",
+        desc:"Fast, powerful continuous-style attacks.",
+        upgrades:{
+            A:{name:"Overcharge", color:"#7fd4ff", tiers:[
+                {cost:350, desc:"+35% damage", apply:t=>{t.dmgMult*=1.35}},
+                {cost:750, desc:"Beam: pierces through the whole line", special:"beam", apply:t=>{t.pierce=true; t.dmgMult*=1.2}}
+            ]},
+            B:{name:"Cooling System", color:"#e8e8e8", tiers:[
+                {cost:350, desc:"+35% fire rate", apply:t=>{t.rateMult*=1.35}},
+                {cost:750, desc:"Pulse: small AoE burst on every hit", special:"pulse", apply:t=>{t.splash=60; t.splashMult=1}}
+            ]}
+        }
+    },
+
+    bomber:{
+        name:"Bomber", icon:"B", category:"damage", cost:450, limit:5,
+        damage:80, range:150, cooldown:1700, projectileSpeed:380, splash:65, color:"#d99b6c",
+        breaksArmor:true,
+        desc:"Bomb tower. Breaks armor by default.",
+        upgrades:{
+            A:{name:"Heavy Ordnance", color:"#ff8a5c", tiers:[
+                {cost:250, desc:"+45% damage", apply:t=>{t.dmgMult*=1.45}},
+                {cost:520, desc:"Nuke: massive splash, +100% damage to bosses", special:"nuke", apply:t=>{t.splashMult*=1.6; t.bossBonus=2}}
+            ]},
+            B:{name:"Cluster Bombs", color:"#d3c86e", tiers:[
+                {cost:250, desc:"+40% splash radius", apply:t=>{t.splashMult*=1.4}},
+                {cost:520, desc:"Cluster: scatters mini explosions on impact", special:"cluster", apply:t=>{t.cluster=true}}
+            ]}
+        }
+    },
+
+    frost:{
+        name:"Frost", icon:"F", category:"support", cost:300, limit:7,
+        damage:10, range:145, cooldown:850, projectileSpeed:400, slow:.42, color:"#b7d5df",
+        desc:"Damages enemies and slows them.",
+        upgrades:{
+            A:{name:"Deep Freeze", color:"#8ec9e8", tiers:[
+                {cost:150, desc:"+20% slow strength", apply:t=>{t.slowBonus=(t.slowBonus||0)+.2}},
+                {cost:320, desc:"Blizzard: constant slow aura around tower", special:"blizzard", apply:t=>{t.auraSlow=.25; t.auraRange=90}}
+            ]},
+            B:{name:"Shatter", color:"#e8f4fa", tiers:[
+                {cost:150, desc:"+30% damage", apply:t=>{t.dmgMult*=1.3}},
+                {cost:320, desc:"Shatter: +100% damage to slowed enemies", special:"shatter", apply:t=>{t.shatterBonus=2}}
+            ]}
+        }
+    },
+
+    commander:{
+        name:"Commander", icon:"M", category:"support", cost:800, limit:3,
+        damage:22, range:155, cooldown:800, projectileSpeed:600, buff:.16, color:"#c7c1a7",
+        desc:"Buffs damage of nearby towers.",
+        upgrades:{
+            A:{name:"Leadership", color:"#e8d283", tiers:[
+                {cost:400, desc:"+10% buff strength", apply:t=>{t.buffBonus=(t.buffBonus||0)+.1}},
+                {cost:850, desc:"War Horn: buff range +60%", special:"warhorn", apply:t=>{t.buffRangeMult=1.6}}
+            ]},
+            B:{name:"Marksman Training", color:"#e88e8e", tiers:[
+                {cost:400, desc:"+30% own damage", apply:t=>{t.dmgMult*=1.3}},
+                {cost:850, desc:"Elite Guard: nearby towers gain 15% crit chance", special:"eliteguard", apply:t=>{t.grantsCrit=.15}}
+            ]}
+        }
+    },
+
+    farm:{
+        name:"Farm", icon:"$", category:"farm", cost:175, limit:20,
+        income:65, incomeTime:7000, color:"#9fb58c",
+        desc:"Generates money while a wave is active.",
+        upgrades:{
+            A:{name:"Efficiency", color:"#c3e0a0", tiers:[
+                {cost:90, desc:"+40% income", apply:t=>{t.incomeMult*=1.4}},
+                {cost:200, desc:"Bank: stores interest between waves", special:"bank", apply:t=>{t.bank=true}}
+            ]},
+            B:{name:"Expansion", color:"#e8d283", tiers:[
+                {cost:90, desc:"-25% income interval", apply:t=>{t.incomeTimeMult*=.75}},
+                {cost:200, desc:"Trade Route: income scales with wave number", special:"traderoute", apply:t=>{t.tradeRoute=true}}
+            ]}
+        }
+    },
+
+    arc:{
+        name:"Arc", icon:"A", category:"special", cost:1200, limit:3,
+        damage:220, range:210, cooldown:2200, projectileSpeed:650, chain:3, color:"#c3c9d2",
+        desc:"Extremely powerful chained attack.",
+        upgrades:{
+            A:{name:"Overload", color:"#ffe066", tiers:[
+                {cost:550, desc:"+2 chain targets", apply:t=>{t.chainBonus=(t.chainBonus||0)+2}},
+                {cost:1100, desc:"Storm: chains to every enemy in range", special:"storm", apply:t=>{t.stormChain=true}}
+            ]},
+            B:{name:"Conduction", color:"#9fd4e8", tiers:[
+                {cost:550, desc:"+40% damage", apply:t=>{t.dmgMult*=1.4}},
+                {cost:1100, desc:"EMP: briefly stuns bosses on hit", special:"emp", apply:t=>{t.empStun=true}}
+            ]}
+        }
+    },
+
+    reactor:{
+        name:"Reactor", icon:"R", category:"special", cost:1800, limit:2,
+        damage:380, range:240, cooldown:3000, projectileSpeed:700, splash:80, color:"#d2c8b1",
+        breaksArmor:true,
+        desc:"One of the strongest towers. Breaks armor.",
+        upgrades:{
+            A:{name:"Meltdown", color:"#ff8a5c", tiers:[
+                {cost:900, desc:"+40% splash radius", apply:t=>{t.splashMult*=1.4}},
+                {cost:1700, desc:"Core Breach: huge periodic shockwave nuke", special:"corebreach", apply:t=>{t.coreBreach=true}}
+            ]},
+            B:{name:"Stabilizer", color:"#9fd4e8", tiers:[
+                {cost:900, desc:"+30% fire rate", apply:t=>{t.rateMult*=1.3}},
+                {cost:1700, desc:"Twin Core: fires two projectiles per shot", special:"twincore", apply:t=>{t.multishot=2}}
+            ]}
+        }
+    },
+
+    diver:{
+        name:"Diver", icon:"D", category:"water", cost:400, limit:6,
+        damage:70, range:150, cooldown:1000, projectileSpeed:600, color:"#6fb8d9",
+        waterOnly:true, detectsCamo:true,
+        desc:"Water-only. Always detects Camouflage enemies.",
+        upgrades:{
+            A:{name:"Sonar", color:"#a0e0ff", tiers:[
+                {cost:200, desc:"+30% range", apply:t=>{t.rangeMult*=1.3}},
+                {cost:420, desc:"Deep Scan: periodically reveals all Camouflage", special:"deepscan", apply:t=>{t.deepScan=true}}
+            ]},
+            B:{name:"Harpoon", color:"#c9d6df", tiers:[
+                {cost:200, desc:"+40% damage", apply:t=>{t.dmgMult*=1.4}},
+                {cost:420, desc:"Piercing Harpoon: shots pierce the whole line", special:"harpoonpierce", apply:t=>{t.pierce=true}}
+            ]}
+        }
+    },
+
+    buoy:{
+        name:"Buoy", icon:"$", category:"water", cost:220, limit:14,
+        income:95, incomeTime:6500, color:"#8fc7a0",
+        waterOnly:true,
+        desc:"Water-only farm. Higher income than a Farm.",
+        upgrades:{
+            A:{name:"Efficiency", color:"#c3e0a0", tiers:[
+                {cost:110, desc:"+40% income", apply:t=>{t.incomeMult*=1.4}},
+                {cost:240, desc:"Bank: stores interest between waves", special:"bank", apply:t=>{t.bank=true}}
+            ]},
+            B:{name:"Expansion", color:"#e8d283", tiers:[
+                {cost:110, desc:"-25% income interval", apply:t=>{t.incomeTimeMult*=.75}},
+                {cost:240, desc:"Trade Route: income scales with wave number", special:"traderoute", apply:t=>{t.tradeRoute=true}}
+            ]}
+        }
+    }
+};
+
+/* =========================================================
+   RANDOM TOWER BLESSINGS (small chance on placement)
+========================================================= */
+
+const blessings = [
+    {key:"crit", name:"Lucky Crit", desc:"+50% dmg on random shots", color:"#ffe066"},
+    {key:"rapid", name:"Overclocked", desc:"+20% fire rate", color:"#7fd4ff"},
+    {key:"eagle", name:"Eagle Eye", desc:"+25% range", color:"#c9ff8e"},
+    {key:"greed", name:"Greedy", desc:"+15% bonus money on kills", color:"#e8d283"}
+];
+
+function rollBlessing(){
+    if(Math.random()<.08){
+        return blessings[Math.floor(Math.random()*blessings.length)];
+    }
+    return null;
+}
+
+/* =========================================================
+   TOWER LIST UI
+========================================================= */
+
+const towerList=document.getElementById("towerList");
+
+function getTowerCount(type){
+    return towers.filter(t=>t.type===type).length;
+}
+
+function renderTowerList(){
+    towerList.innerHTML="";
+
+    Object.entries(towerTypes)
+    .filter(([key,t])=>currentFilter==="all" || t.category===currentFilter)
+    .forEach(([key,t])=>{
+
+        const count=getTowerCount(key);
+        const card=document.createElement("div");
+
+        card.className="towerCard"+
+            (selectedTowerType===key ? " selected":"")+
+            (count>=t.limit ? " disabled":"");
+
+        card.innerHTML=`
+            <div class="towerTop">
+                <div class="towerIcon" style="color:${t.color}">${t.icon}</div>
+                <div class="towerName">${t.name}</div>
+                <div class="limit">${count}/${t.limit}</div>
+            </div>
+            <div class="towerDesc">${t.desc}</div>
+            <div class="towerCost">Cost: $${t.cost}</div>
+        `;
+
+        card.addEventListener("click",()=>{
+            if(gameState!=="playing"){ return; }
+            if(count>=t.limit){ setMessage(`${t.name} placement limit reached (${t.limit}).`); return; }
+            if(money<t.cost){ setMessage(`Not enough money for ${t.name}.`); return; }
 
             selectedTowerType=key;
             selectedTower=null;
+            hideSelectedInfo();
+            renderTowerList();
+            setMessage(`Selected ${t.name}. Click a valid location.`);
+        });
 
-            updateUI();
-
-        };
-
-        box.appendChild(button);
-
-    }
-
-}
-
-
-/* =========================================================
-                        MOUSE
-========================================================= */
-
-canvas.addEventListener("mousemove",function(e){
-
-    const r=canvas.getBoundingClientRect();
-
-    mouseX=e.clientX-r.left;
-    mouseY=e.clientY-r.top;
-
-});
-
-
-canvas.addEventListener("click",function(e){
-
-    if(!gameRunning||paused)return;
-
-    const r=canvas.getBoundingClientRect();
-
-    const x=e.clientX-r.left;
-    const y=e.clientY-r.top;
-
-    if(selectedTowerType){
-
-        placeTower(x,y);
-        return;
-
-    }
-
-    selectedTower=null;
-
-    for(const t of towers){
-
-        if(distance(x,y,t.x,t.y)<25){
-
-            selectedTower=t;
-            break;
-
-        }
-
-    }
-
-    updateUI();
-
-});
-
-
-/* =========================================================
-                       WATER
-========================================================= */
-
-function isWater(x,y){
-
-    return water.some(function(z){
-
-        return(
-            x>z.x &&
-            x<z.x+z.w &&
-            y>z.y &&
-            y<z.y+z.h
-        );
-
+        towerList.appendChild(card);
     });
-
 }
 
+document.querySelectorAll(".filterBtn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+        document.querySelectorAll(".filterBtn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter=btn.dataset.filter;
+        renderTowerList();
+    });
+});
 
 /* =========================================================
-                       PATH
+   ENEMY DEFINITIONS
+   "normal" type shows no label. Special types show an ability
+   label (not an animal name) in a distinct color above them.
 ========================================================= */
 
-function pointSegmentDistance(px,py,x1,y1,x2,y2){
+const enemyTypes = {
+    normal:   {hp:80,  speed:.00006, reward:18, radius:9,  color:"#9ca8b0"},
+    fast:     {hp:50,  speed:.00013, reward:16, radius:7,  color:"#e8d97a", label:"Fast",         labelColor:"#e8d97a"},
+    tank:     {hp:520, speed:.00003, reward:60, radius:15, color:"#8d989f", label:"Tank",          labelColor:"#c7cdd2"},
+    armored:  {hp:650, speed:.00004, reward:90, radius:15, color:"#707a82", label:"Armored",       labelColor:"#f0a94e", armored:true},
+    camo:     {hp:220, speed:.00007, reward:70, radius:10, color:"#a0aab3", label:"Camouflage",    labelColor:"#c88ee0", camo:true, alpha:.45},
+    bear:     {hp:400, speed:.00005, reward:80, radius:13, color:"#a9855f", label:"Regen",         labelColor:"#7fd47f", regen:true},
+    polar:    {hp:380, speed:.00005, reward:85, radius:13, color:"#dbe6ea", label:"Ice Immune",    labelColor:"#9fd4e8", iceImmune:true},
+    cheetah:  {hp:150, speed:.00017, reward:55, radius:9,  color:"#d9b872", label:"Speed Boost",   labelColor:"#f0d060", speedBoost:true},
+    boss:     {hp:9000,speed:.00002, reward:1000,radius:30,color:"#d0d0d0", label:"BOSS",          labelColor:"#ff5c5c", boss:true, armored:true}
+};
 
-    const dx=x2-x1;
-    const dy=y2-y1;
+function spawnEnemy(type,waveNum){
+    const base=enemyTypes[type];
+    const mult=difficultyData.enemyMult;
+    const waveScale=1+waveNum*.07;
 
-    if(dx===0&&dy===0)
-        return distance(px,py,x1,y1);
-
-    let t=
-        ((px-x1)*dx+
-        (py-y1)*dy)/
-        (dx*dx+dy*dy);
-
-    t=Math.max(0,Math.min(1,t));
-
-    return distance(
-        px,
-        py,
-        x1+t*dx,
-        y1+t*dy
-    );
-
+    enemies.push({
+        type, hp:base.hp*waveScale*mult, maxHp:base.hp*waveScale*mult,
+        progress:0, speed:base.speed, reward:Math.round(base.reward*(1+waveNum*.03)),
+        radius:base.radius, slow:1, alive:true
+    });
 }
 
+/* =========================================================
+   PLACEMENT
+========================================================= */
 
-function isPath(x,y){
+function canPlace(x,y,type){
+    const t=towerTypes[type];
+    if(getTowerCount(type)>=t.limit) return false;
+    if(money<t.cost) return false;
 
-    for(let i=0;i<path.length-1;i++){
+    for(const tower of towers){
+        if(Math.hypot(x-tower.x,y-tower.y)<34) return false;
+    }
+    if(distanceToPath(x,y)<27) return false;
 
-        if(
-            pointSegmentDistance(
-                x,
-                y,
-                path[i][0],
-                path[i][1],
-                path[i+1][0],
-                path[i+1][1]
-            )<35
-        ){
-
-            return true;
-
-        }
-
+    if(t.waterOnly){
+        if(!inWater(x,y)) return false;
+    }else{
+        if(inWater(x,y)) return false;
     }
 
-    return false;
-
+    return true;
 }
-
-
-/* =========================================================
-                  TOWER EFFECT ROLL
-========================================================= */
-
-function rollTowerEffect(){
-
-    let roll=Math.random();
-    let total=0;
-
-    for(const effect of towerEffects){
-
-        total+=effect.chance;
-
-        if(roll<total)
-            return effect;
-
-    }
-
-    return null;
-
-}
-
-
-/* =========================================================
-                     PLACE TOWER
-========================================================= */
 
 function placeTower(x,y){
+    if(!selectedTowerType) return;
+    const type=selectedTowerType;
+    const data=towerTypes[type];
 
-    const type=towerTypes[selectedTowerType];
-
-    if(!type)return;
-
-    if(money<type.cost)return;
-
-    const amount=
-        towers.filter(
-            t=>t.type===selectedTowerType
-        ).length;
-
-    if(amount>=20){
-
-        alert(
-            "You can only have 20 "+
-            type.name+
-            " towers."
-        );
-
+    if(!canPlace(x,y,type)){
+        if(getTowerCount(type)>=data.limit) setMessage(`${data.name} limit reached: ${data.limit}.`);
+        else if(money<data.cost) setMessage("Not enough money.");
+        else if(data.waterOnly) setMessage(`${data.name} can only be placed in water.`);
+        else if(inWater(x,y)) setMessage("Cannot place a land tower in water.");
+        else setMessage("That location cannot hold a tower.");
         return;
-
     }
 
-    if(type.water&&!isWater(x,y))
-        return;
+    money-=data.cost;
 
-    if(type.land&&isWater(x,y))
-        return;
-
-    if(isPath(x,y))
-        return;
-
-    const effect=rollTowerEffect();
+    const blessing=rollBlessing();
 
     towers.push({
-
-        type:selectedTowerType,
-
-        x:x,
-        y:y,
-
-        level:[0,0,0],
-
-        lastShot:0,
-
-        incomeTimer:0,
-
-        kills:0,
-
-        effect:effect,
-
-        abilityCooldown:0,
-
-        abilityActive:0,
-
-        abilityUses:0,
-
-        invested:type.cost
-
+        id:Date.now()+Math.random(),
+        type, x, y,
+        cooldown:0,
+        incomeTimer:data.incomeTime||0,
+        pathALevel:0, pathBLevel:0,
+        dmgMult:1, rateMult:1, rangeMult:1, splashMult:1,
+        incomeMult:1, incomeTimeMult:1,
+        multishot:1, pierce:false, breaksArmor:!!data.breaksArmor, detectsCamo:!!data.detectsCamo,
+        critChance:0, critMult:1, camoBonus:1, bossBonus:1,
+        auraSlow:0, auraRange:0, slowBonus:0, shatterBonus:1,
+        buffBonus:0, buffRangeMult:1, grantsCrit:0,
+        bank:false, tradeRoute:false, cluster:false, stormChain:false,
+        empStun:false, coreBreach:false, deepScan:false, chainBonus:0,
+        blessing, storedInterest:0
     });
 
-    money-=type.cost;
-
-    selectedTowerType=null;
-    selectedTower=null;
-
+    setMessage(`${data.name} placed.`+(blessing?` It rolled a blessing: ${blessing.name}!`:""));
+    renderTowerList();
     updateUI();
-
 }
 
+/* =========================================================
+   UPGRADES
+========================================================= */
+
+function upgradeTower(tower,pathKey){
+    const data=towerTypes[tower.type];
+    const path=data.upgrades[pathKey];
+    const levelProp = pathKey==="A" ? "pathALevel" : "pathBLevel";
+    const level = tower[levelProp];
+
+    if(level>=path.tiers.length) return;
+    const tier=path.tiers[level];
+
+    if(money<tier.cost){ setMessage("Not enough money for that upgrade."); return; }
+
+    money-=tier.cost;
+    tier.apply(tower);
+    tower[levelProp]++;
+
+    setMessage(`${data.name} upgraded: ${path.name} tier ${tower[levelProp]}.`);
+    showSelectedInfo(tower);
+    updateUI();
+}
 
 /* =========================================================
-                       WAVE SYSTEM
+   TARGETING / BUFFS
+========================================================= */
+
+function getBuffMultiplier(tower){
+    let multiplier=1;
+    let critBonus=0;
+
+    for(const other of towers){
+        if(other.type!=="commander") continue;
+        const range=towerTypes.commander.range*(other.buffRangeMult||1);
+        const d=Math.hypot(tower.x-other.x,tower.y-other.y);
+        if(d<=range){
+            multiplier+=towerTypes.commander.buff+(other.buffBonus||0);
+            if(other.grantsCrit) critBonus=Math.max(critBonus,other.grantsCrit);
+        }
+    }
+    return {multiplier,critBonus};
+}
+
+function getTarget(tower){
+    const data=towerTypes[tower.type];
+    const range=data.range*tower.rangeMult;
+
+    let best=null, bestProgress=-1;
+
+    for(const e of enemies){
+        if(!e.alive) continue;
+        if(e.camo && !tower.detectsCamo) continue;
+
+        const p=pointOnPath(e.progress);
+        const d=Math.hypot(p.x-tower.x,p.y-tower.y);
+
+        if(d<=range && e.progress>bestProgress){
+            best=e; bestProgress=e.progress;
+        }
+    }
+    return best;
+}
+
+/* =========================================================
+   ATTACKS
+========================================================= */
+
+function fireTower(tower,target){
+    const data=towerTypes[tower.type];
+    if(!data.damage) return;
+
+    const {multiplier,critBonus}=getBuffMultiplier(tower);
+    let dmg=data.damage*tower.dmgMult*multiplier;
+
+    const totalCrit=Math.min(.95,tower.critChance+critBonus);
+    if(totalCrit>0 && Math.random()<totalCrit) dmg*=tower.critMult||2;
+
+    if(target.camo && tower.camoBonus>1) dmg*=tower.camoBonus;
+    if(target.boss && tower.bossBonus>1) dmg*=tower.bossBonus;
+
+    if(tower.blessing && tower.blessing.key==="crit" && Math.random()<.25) dmg*=1.5;
+
+    const shots=tower.multishot||1;
+    let targets=[target];
+
+    if(shots>1){
+        targets=[target];
+        const alive=enemies.filter(e=>e.alive && (!e.camo||tower.detectsCamo));
+        alive.sort((a,b)=>b.progress-a.progress);
+        for(const e of alive){
+            if(targets.length>=shots) break;
+            if(!targets.includes(e)) targets.push(e);
+        }
+    }
+
+    for(const tgt of targets){
+        projectiles.push({
+            x:tower.x, y:tower.y, target:tgt,
+            speed:data.projectileSpeed||500,
+            damage:dmg,
+            splash:(data.splash||0)*tower.splashMult,
+            slow:(data.slow||0)+(tower.slowBonus||0),
+            chain:(data.chain||0)+(tower.chainBonus||0),
+            towerType:tower.type,
+            breaksArmor:tower.breaksArmor,
+            pierce:tower.pierce,
+            shatterBonus:tower.shatterBonus,
+            cluster:tower.cluster,
+            stormChain:tower.stormChain,
+            empStun:tower.empStun
+        });
+    }
+}
+
+function damageEnemy(enemy,amount,breaksArmor,shatterBonus){
+    if(!enemy || !enemy.alive) return;
+
+    if(enemy.armored && !breaksArmor) amount*=.25;
+    if(shatterBonus && shatterBonus>1 && enemy.slow<1) amount*=shatterBonus;
+
+    enemy.hp-=amount;
+
+    if(enemy.hp<=0){
+        enemy.alive=false;
+        let reward=enemy.reward;
+        const p=pointOnPath(enemy.progress);
+        createParticles(p.x,p.y,8);
+        money+=reward;
+    }
+}
+
+function chainAttack(startEnemy,damage,count,breaksArmor,stormChain){
+    let current=startEnemy;
+    const hit=new Set();
+
+    if(stormChain){
+        const range=towerTypes.arc.range;
+        const cp=pointOnPath(startEnemy.progress);
+        for(const e of enemies){
+            if(!e.alive) continue;
+            const ep=pointOnPath(e.progress);
+            if(Math.hypot(cp.x-ep.x,cp.y-ep.y)<=range){
+                damageEnemy(e,damage,breaksArmor);
+            }
+        }
+        return;
+    }
+
+    for(let i=0;i<count && current;i++){
+        if(hit.has(current)) break;
+        hit.add(current);
+        damageEnemy(current,damage,breaksArmor);
+
+        let next=null, best=Infinity;
+        const cp=pointOnPath(current.progress);
+
+        for(const e of enemies){
+            if(!e.alive || hit.has(e)) continue;
+            const ep=pointOnPath(e.progress);
+            const d=Math.hypot(cp.x-ep.x,cp.y-ep.y);
+            if(d<90 && d<best){ best=d; next=e; }
+        }
+        current=next;
+        damage*=.72;
+    }
+}
+
+/* =========================================================
+   PROJECTILES
+========================================================= */
+
+function updateProjectiles(dt){
+    for(const p of projectiles){
+
+        if(!p.target || !p.target.alive){ p.dead=true; continue; }
+
+        const ep=pointOnPath(p.target.progress);
+        const dx=ep.x-p.x, dy=ep.y-p.y;
+        const dist=Math.hypot(dx,dy);
+        const step=p.speed*dt/1000*gameSpeed;
+
+        if(dist<=step+5){
+
+            if(p.towerType==="arc"){
+                chainAttack(p.target,p.damage,p.chain,p.breaksArmor,p.stormChain);
+            }else{
+                damageEnemy(p.target,p.damage,p.breaksArmor,p.shatterBonus);
+
+                if(p.empStun && p.target.boss){
+                    p.target.speed*=.4;
+                    setTimeout(()=>{ if(p.target) p.target.speed/=.4; },1200);
+                }
+
+                if(p.splash){
+                    for(const e of enemies){
+                        if(!e.alive || e===p.target) continue;
+                        const q=pointOnPath(e.progress);
+                        if(Math.hypot(q.x-ep.x,q.y-ep.y)<=p.splash)
+                            damageEnemy(e,p.damage*.42,p.breaksArmor);
+                    }
+                }
+
+                if(p.cluster){
+                    for(let i=0;i<3;i++){
+                        const a=Math.random()*Math.PI*2;
+                        const dist2=20+Math.random()*40;
+                        const cx=ep.x+Math.cos(a)*dist2;
+                        const cy=ep.y+Math.sin(a)*dist2;
+                        for(const e of enemies){
+                            if(!e.alive) continue;
+                            const q=pointOnPath(e.progress);
+                            if(Math.hypot(q.x-cx,q.y-cy)<=30)
+                                damageEnemy(e,p.damage*.3,p.breaksArmor);
+                        }
+                    }
+                }
+
+                if(p.slow && !p.target.iceImmune){
+                    p.target.slow=Math.min(p.target.slow,1-p.slow);
+                }
+
+                if(p.pierce){
+                    for(const e of enemies){
+                        if(!e.alive || e===p.target) continue;
+                        const q=pointOnPath(e.progress);
+                        if(Math.abs(q.x-ep.x)<40 && Math.abs(q.y-ep.y)<40)
+                            damageEnemy(e,p.damage*.6,p.breaksArmor);
+                    }
+                }
+            }
+
+            createParticles(ep.x,ep.y,4);
+            p.dead=true;
+        }else{
+            p.x+=dx/dist*step;
+            p.y+=dy/dist*step;
+        }
+    }
+
+    projectiles=projectiles.filter(p=>!p.dead);
+}
+
+/* =========================================================
+   WAVES
 ========================================================= */
 
 function startWave(){
-
-    if(waveActive||!gameRunning)
-        return;
+    if(waveRunning || gameState!=="playing") return;
 
     wave++;
-
-    spawnQueue=[];
-
-    if(wave%10===0){
-
-        /*
-          Every tenth wave gets a major boss.
-        */
-
-        spawnQueue.push({
-            type:"boss"
-        });
-
-        /*
-          Additional boss variants appear
-          occasionally in later boss rounds.
-        */
-
-        if(wave>=20)
-            spawnQueue.push({
-                type:"bossArmor"
-            });
-
-        if(wave>=30)
-            spawnQueue.push({
-                type:"bossRegeneration"
-            });
-
-        if(wave>=40)
-            spawnQueue.push({
-                type:"bossCamouflage"
-            });
-
-        if(wave>=50)
-            spawnQueue.push({
-                type:"bossShield"
-            });
-
-        for(
-            let i=0;
-            i<5+Math.floor(wave/5);
-            i++
-        ){
-
-            spawnQueue.push({
-                type:randomEnemy()
-            });
-
-        }
-
-    }else{
-
-        const amount=
-            Math.floor(
-                8+
-                wave*2.4
-            );
-
-        for(let i=0;i<amount;i++){
-
-            spawnQueue.push({
-                type:randomEnemy()
-            });
-
-        }
-
-    }
-
-    waveActive=true;
+    waveRunning=true;
+    waveTimer=0;
     spawnTimer=0;
+    autoplayTimer=0;
 
+    setMessage(`Wave ${wave} started.`);
+    updateUI();
 }
 
+function pickEnemyType(waveNum,isLast){
+    if(waveNum%10===0 && isLast) return "boss";
 
-/*
-  Special enemies are deliberately uncommon.
-*/
+    const roll=Math.random();
+    const pool=[];
 
-function randomEnemy(){
+    pool.push(["normal",1]);
+    if(waveNum>=3) pool.push(["fast",.5]);
+    if(waveNum>=6) pool.push(["tank",.35]);
+    if(waveNum>=9) pool.push(["armored",.3]);
+    if(waveNum>=11) pool.push(["camo",.22]);
+    if(waveNum>=13) pool.push(["bear",.2]);
+    if(waveNum>=15) pool.push(["polar",.18]);
+    if(waveNum>=17) pool.push(["cheetah",.22]);
 
-    const normalPool=["normal"];
-
-    const special=[];
-
-    if(wave>=2)special.push("speedy");
-    if(wave>=3)special.push("healthy");
-    if(wave>=4)special.push("armored");
-    if(wave>=5)special.push("bombonly");
-    if(wave>=6)special.push("iceproof");
-    if(wave>=7)special.push("camouflage");
-    if(wave>=8)special.push("regeneration");
-    if(wave>=9)special.push("shielded");
-    if(wave>=11)special.push("flying");
-    if(wave>=12)special.push("swarm");
-    if(wave>=13)special.push("splitter");
-    if(wave>=14)special.push("giant");
-    if(wave>=15)special.push("burning");
-    if(wave>=16)special.push("electricEnemy");
-    if(wave>=18)special.push("waterproof");
-    if(wave>=22)special.push("fastArmor");
-
-    /*
-      Most enemies remain normal.
-    */
-
-    if(
-        special.length>0 &&
-        Math.random()<.38
-    ){
-
-        return special[
-            Math.floor(
-                Math.random()*special.length
-            )
-        ];
-
+    const total=pool.reduce((s,p)=>s+p[1],0);
+    let r=roll*total;
+    for(const [type,weight] of pool){
+        if(r<=weight) return type;
+        r-=weight;
     }
-
     return "normal";
-
 }
 
+function spawnForWave(){
+    const count=8+wave*2;
 
-/* =========================================================
-                TOWER POWER / ENEMY SCALING
-========================================================= */
-
-/*
-  Enemy scaling explicitly responds to the player's
-  total offensive tower strength.
-
-  The result is intentionally bounded so that adding
-  more towers does not create an infinite feedback loop.
-*/
-
-function calculateTowerPower(){
-
-    let power=0;
-
-    for(const t of towers){
-
-        const type=towerTypes[t.type];
-
-        if(!type.damage)
-            continue;
-
-        let damage=type.damage;
-
-        damage*=getPathDamageMultiplier(t);
-
-        damage*=towerDamageMultiplier(t);
-
-        power+=damage;
-
+    if(waveTimer>=count){
+        waveRunning=false;
+        const bonus=100+wave*10;
+        money+=bonus;
+        setMessage(`Wave ${wave} cleared. +$${bonus} bonus.`);
+        updateUI();
+        return;
     }
 
-    return power;
-
+    const isLast = waveTimer===count-1;
+    const type=pickEnemyType(wave,isLast);
+    spawnEnemy(type,wave);
+    waveTimer++;
 }
-
-
-function getDamageScale(){
-
-    const power=calculateTowerPower();
-
-    /*
-      Baseline 1.
-      Stronger tower setups produce tougher enemies.
-    */
-
-    return 1+
-        Math.min(
-            5,
-            power/120
-        );
-
-}
-
 
 /* =========================================================
-                  UPGRADE CALCULATIONS
+   PARTICLES
 ========================================================= */
 
-function getPathDamageMultiplier(t){
-
-    const level=t.level[0];
-
-    if(level<=0)
-        return 1;
-
-    return 1+
-        level*.30+
-        Math.pow(level,1.35)*.035;
-
-}
-
-
-function getRangeMultiplier(t){
-
-    let result=1;
-
-    const level=t.level[1];
-
-    if(level>=1)
-        result*=1.15;
-
-    if(level>=4)
-        result*=1.30;
-
-    if(
-        t.effect &&
-        t.effect.name==="long range"
-    )
-        result*=1.25;
-
-    if(
-        t.effect &&
-        t.effect.name==="unstable"
-    )
-        result*=.80;
-
-    return result;
-
-}
-
-
-function getFireRateMultiplier(t){
-
-    let result=1;
-
-    const level=t.level[1];
-
-    if(level>=2)
-        result*=.82;
-
-    if(level>=3)
-        result*=.68;
-
-    if(level>=5)
-        result*=.60;
-
-    if(
-        t.effect &&
-        t.effect.name==="rapid"
-    )
-        result*=.70;
-
-    return result;
-
-}
-
-
-function towerDamageMultiplier(t){
-
-    let result=1;
-
-    if(!t.effect)
-        return result;
-
-    if(t.effect.name==="powerful")
-        result*=1.35;
-
-    if(t.effect.name==="unstable")
-        result*=1.60;
-
-    if(t.effect.name==="weak")
-        result*=.75;
-
-    return result;
-
-}
-
-
-function towerRangeMultiplier(t){
-
-    return getRangeMultiplier(t);
-
-}
-
-
-function towerIncomeMultiplier(t){
-
-    let result=1;
-
-    if(
-        t.effect &&
-        t.effect.name==="wealthy"
-    )
-        result*=1.5;
-
-    return result;
-
-}
-
-
-/* =========================================================
-                    SPAWN ENEMY
-========================================================= */
-
-function spawnEnemy(typeName){
-
-    const base=enemyTypes[typeName];
-
-    const d=difficultyData[difficulty];
-
-    /*
-      Wave scaling.
-    */
-
-    let waveScale=
-        1+
-        Math.pow(wave,1.18)*.055;
-
-    /*
-      Player-power scaling.
-    */
-
-    let playerScale=
-        getDamageScale();
-
-    let hpValue=
-        base.hp*
-        d.enemyScale*
-        waveScale*
-        playerScale;
-
-    if(base.boss){
-
-        hpValue=
-            base.hp*
-            d.enemyScale*
-            Math.pow(1.16,wave/10)*
-            (1+wave*.12)*
-            (1+getDamageScale());
-
+function createParticles(x,y,count){
+    for(let i=0;i<count;i++){
+        const a=Math.random()*Math.PI*2;
+        const s=30+Math.random()*80;
+        particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.5+Math.random()*.4});
     }
-
-
-    enemies.push({
-
-        type:typeName,
-
-        x:path[0][0],
-        y:path[0][1],
-
-        pathIndex:0,
-
-        hp:hpValue,
-        maxHp:hpValue,
-
-        speed:
-            base.speed*
-            d.enemySpeed*
-            (1+wave*.008),
-
-        reward:
-            Math.round(
-                base.reward*
-                d.reward*
-                (1+wave*.025)
-            ),
-
-        shield:base.shield||0,
-
-        slow:1,
-
-        dead:false,
-
-        distanceTravelled:0,
-
-        regenTimer:0,
-
-        burnTimer:0
-
-    });
-
 }
 
+function updateParticles(dt){
+    for(const p of particles){
+        p.life-=dt/1000*gameSpeed;
+        p.x+=p.vx*dt/1000*gameSpeed;
+        p.y+=p.vy*dt/1000*gameSpeed;
+        p.vx*=.97; p.vy*=.97;
+    }
+    particles=particles.filter(p=>p.life>0);
+}
 
 /* =========================================================
-                       UPDATE
+   GAME UPDATE
 ========================================================= */
 
 function update(dt){
+    if(gameState!=="playing") return;
 
-    if(!gameRunning||paused)
-        return;
-
-    dt*=gameSpeed;
-
-
-    /* ---------------------------------------------
-       Spawn enemies
-    --------------------------------------------- */
-
-    if(waveActive){
-
-        spawnTimer-=dt;
-
-        if(
-            spawnTimer<=0 &&
-            spawnQueue.length>0
-        ){
-
-            spawnEnemy(
-                spawnQueue.shift().type
-            );
-
-            /*
-              Bosses enter slower so they do not
-              appear as an instant pile.
-            */
-
-            spawnTimer=
-                wave%10===0?
-                450:
-                220;
-
-        }
-
+    if(waveRunning){
+        spawnTimer-=dt*gameSpeed;
+        if(spawnTimer<=0){ spawnForWave(); spawnTimer=850; }
+    }else if(autoplay && lives>0){
+        autoplayTimer-=dt*gameSpeed;
+        if(autoplayTimer<=0){ startWave(); }
     }
-
-
-    /* ---------------------------------------------
-       Farms ONLY work during active rounds
-    --------------------------------------------- */
-
-    if(waveActive){
-
-        for(const t of towers){
-
-            const type=towerTypes[t.type];
-
-            if(!type.farm)
-                continue;
-
-            t.incomeTimer+=dt;
-
-            if(t.incomeTimer>=1000){
-
-                const times=
-                    Math.floor(
-                        t.incomeTimer/1000
-                    );
-
-                let income=
-                    type.income;
-
-                /*
-                  Path 1 and 2 improve farms.
-                */
-
-                income*=
-                    1+
-                    t.level[0]*.25;
-
-                income*=
-                    1+
-                    t.level[1]*.15;
-
-                income*=
-                    towerIncomeMultiplier(t);
-
-                if(t.level[2]>=3)
-                    income*=1.20;
-
-                money+=
-                    income*times;
-
-                t.incomeTimer%=1000;
-
-            }
-
-        }
-
-    }
-
-
-    updateEnemies(dt);
-    updateTowers(dt);
-    updateBullets(dt);
-    updateVisualEffects(dt);
-    updateTowerAbilities(dt);
-
-
-    /*
-      Round finished.
-    */
-
-    if(
-        waveActive &&
-        spawnQueue.length===0 &&
-        enemies.length===0
-    ){
-
-        waveActive=false;
-
-        /*
-          Small round completion reward.
-        */
-
-        money+=
-            Math.floor(
-                25+
-                wave*3
-            );
-
-        if(autoplay){
-
-            autoplayTimer=700;
-
-        }
-
-    }
-
-
-    if(autoplayTimer>0){
-
-        autoplayTimer-=dt;
-
-        if(
-            autoplayTimer<=0 &&
-            autoplay &&
-            !waveActive &&
-            gameRunning
-        ){
-
-            startWave();
-
-        }
-
-    }
-
-
-    if(hp<=0){
-
-        hp=0;
-        gameRunning=false;
-
-        alert(
-            "Game over.\n"+
-            "You reached wave "+
-            wave+"."
-        );
-
-        backToMenu();
-
-    }
-
-    updateUI();
-
-}
-
-
-/* =========================================================
-                       ENEMIES
-========================================================= */
-
-function updateEnemies(dt){
 
     for(const e of enemies){
+        if(!e.alive) continue;
 
-        if(e.dead)
-            continue;
+        let speedMult=e.slow;
+        e.progress+=e.speed*dt*gameSpeed*speedMult;
 
-        const type=enemyTypes[e.type];
+        if(e.regen) e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.00002*dt*gameSpeed);
 
+        if(e.progress>=1){
+            e.alive=false;
+            lives-= e.type==="boss" ? 25 : 5;
+            if(lives<0) lives=0;
 
-        /*
-          Regeneration.
-        */
-
-        if(type.regen){
-
-            e.regenTimer+=dt;
-
-            if(e.regenTimer>=1000){
-
-                e.hp=
-                    Math.min(
-                        e.maxHp,
-                        e.hp+
-                        e.maxHp*.025
-                    );
-
-                e.regenTimer=0;
-
+            if(lives<=0){
+                waveRunning=false;
+                setMessage("Defeat. Restart or return to menu.");
             }
-
         }
 
-
-        /*
-          Burning enemies are fire immune.
-        */
-
-
-        /*
-          Path movement.
-        */
-
-        const target=
-            path[e.pathIndex+1];
-
-        if(!target){
-
-            e.dead=true;
-
-            /*
-              Bosses cause a much larger leak.
-            */
-
-            hp-=
-                type.boss?
-                20:
-                1;
-
-            continue;
-
-        }
-
-
-        let dx=target[0]-e.x;
-        let dy=target[1]-e.y;
-
-        const dist=
-            Math.sqrt(
-                dx*dx+
-                dy*dy
-            );
-
-        if(dist<2){
-
-            e.pathIndex++;
-
-            continue;
-
-        }
-
-        dx/=dist;
-        dy/=dist;
-
-        const movement=
-            e.speed*
-            e.slow*
-            dt*
-            .08;
-
-        e.x+=dx*movement;
-        e.y+=dy*movement;
-
-        e.distanceTravelled+=movement;
-
+        if(e.slow<1) e.slow=Math.min(1,e.slow+dt/1000*.05);
     }
 
-
-    enemies=
-        enemies.filter(
-            e=>!e.dead
-        );
-
-}
-
-
-/* =========================================================
-                     TOWER UPDATE
-========================================================= */
-
-function updateTowers(dt){
-
-    for(const t of towers){
-
-        const type=towerTypes[t.type];
-
-        if(type.farm||type.support)
-            continue;
-
-        t.lastShot+=dt;
-
-        if(t.abilityCooldown>0)
-            t.abilityCooldown-=dt;
-
-        const fireRate=
-            type.fireRate*
-            getFireRateMultiplier(t);
-
-        if(t.lastShot<fireRate)
-            continue;
-
-        const target=findTarget(t);
-
-        if(!target)
-            continue;
-
-        t.lastShot=0;
-
-        fireTower(t,target);
-
-    }
-
-}
-
-
-/* =========================================================
-                      TARGETING
-========================================================= */
-
-function findTarget(t){
-
-    const type=towerTypes[t.type];
-
-    const range=
-        type.range*
-        towerRangeMultiplier(t);
-
-    let target=null;
-
-    let furthest=-Infinity;
-
+    // sync enemy flags from type
     for(const e of enemies){
-
-        if(e.dead)
-            continue;
-
-        if(
-            distance(
-                t.x,
-                t.y,
-                e.x,
-                e.y
-            )>range
-        )
-            continue;
-
-
-        if(
-            enemyTypes[e.type].camo &&
-            !canSeeCamo(t)
-        )
-            continue;
-
-
-        if(
-            enemyTypes[e.type].flying &&
-            !canHitFlying(t)
-        )
-            continue;
-
-
-        if(
-            enemyTypes[e.type].bombOnly &&
-            !type.bomb &&
-            t.level[0]<4
-        )
-            continue;
-
-
-        if(
-            e.distanceTravelled>
-            furthest
-        ){
-
-            furthest=e.distanceTravelled;
-            target=e;
-
-        }
-
+        const t=enemyTypes[e.type];
+        e.camo=t.camo; e.armored=t.armored; e.iceImmune=t.iceImmune; e.regen=t.regen; e.boss=t.boss;
     }
 
-    return target;
-
-}
-
-
-function canSeeCamo(t){
-
-    const type=towerTypes[t.type];
-
-    if(type.camo)
-        return true;
-
-    if(t.level[1]>=4)
-        return true;
-
-    for(const s of towers){
-
-        if(
-            towerTypes[s.type].name==="sonar" &&
-            distance(
-                s.x,
-                s.y,
-                t.x,
-                t.y
-            )<=
-            towerTypes[s.type].range
-        ){
-
-            return true;
-
-        }
-
-    }
-
-    return false;
-
-}
-
-
-function canHitFlying(t){
-
-    const type=towerTypes[t.type];
-
-    return(
-        !!type.antiAir ||
-        t.level[1]>=2
-    );
-
-}
-
-
-/* =========================================================
-                    FIRE PROJECTILE
-========================================================= */
-
-function fireTower(t,target){
-
-    const type=towerTypes[t.type];
-
-    let damage=
-        type.damage*
-        getPathDamageMultiplier(t)*
-        towerDamageMultiplier(t);
-
-
-    /*
-      Lucky tower effect.
-    */
-
-    if(
-        t.effect &&
-        t.effect.name==="lucky" &&
-        Math.random()<.15
-    ){
-
-        damage*=2;
-
-        textEffect(
-            target.x,
-            target.y-25,
-            "lucky"
-        );
-
-    }
-
-
-    bullets.push({
-
-        x:t.x,
-        y:t.y,
-
-        target:target,
-
-        damage:damage,
-
-        type:type.projectile,
-
-        splash:type.splash||0,
-
-        slow:type.slow||0,
-
-        tower:t,
-
-        speed:
-            type.projectile==="laser"?
-            2:
-            1
-
-    });
-
-}
-
-
-/* =========================================================
-                    BULLET UPDATE
-========================================================= */
-
-function updateBullets(dt){
-
-    for(const b of bullets){
-
-        if(
-            !b.target ||
-            b.target.dead
-        ){
-
-            b.dead=true;
-            continue;
-
-        }
-
-        const dx=
-            b.target.x-b.x;
-
-        const dy=
-            b.target.y-b.y;
-
-        const dist=
-            Math.sqrt(
-                dx*dx+
-                dy*dy
-            );
-
-        let speed=b.speed;
-
-        if(b.type==="missile")
-            speed=.75;
-
-        if(b.type==="meteor")
-            speed=.65;
-
-        if(b.type==="nuke")
-            speed=.55;
-
-        if(b.type==="rail")
-            speed=4;
-
-        if(dist<8){
-
-            hitEnemy(
-                b,
-                b.target
-            );
-
-            b.dead=true;
-
-            continue;
-
-        }
-
-        b.x+=
-            dx/dist*
-            speed*
-            dt;
-
-        b.y+=
-            dy/dist*
-            speed*
-            dt;
-
-    }
-
-
-    bullets=
-        bullets.filter(
-            b=>!b.dead
-        );
-
-}
-
-
-/* =========================================================
-                     DAMAGE / IMMUNITIES
-========================================================= */
-
-function hitEnemy(b,e){
-
-    if(e.dead)
-        return;
-
-    const type=enemyTypes[e.type];
-
-    const towerType=
-        towerTypes[b.tower.type];
-
-
-    /*
-      Bomb-only enemy.
-    */
-
-    if(
-        type.bombOnly &&
-        !towerType.bomb &&
-        ![
-            "bomb",
-            "missile",
-            "meteor",
-            "nuke"
-        ].includes(b.type)
-    ){
-
-        textEffect(
-            e.x,
-            e.y-20,
-            "bomb only"
-        );
-
-        return;
-
-    }
-
-
-    /*
-      Ice immunity.
-    */
-
-    if(
-        type.iceImmune &&
-        b.type==="ice"
-    ){
-
-        textEffect(
-            e.x,
-            e.y-20,
-            "ice immune"
-        );
-
-        return;
-
-    }
-
-
-    /*
-      Fire immunity.
-    */
-
-    if(
-        type.fireImmune &&
-        [
-            "fire",
-            "fireball"
-        ].includes(b.type)
-    ){
-
-        textEffect(
-            e.x,
-            e.y-20,
-            "fire immune"
-        );
-
-        return;
-
-    }
-
-
-    /*
-      Electric immunity.
-    */
-
-    if(
-        type.electricImmune &&
-        b.type==="electric"
-    ){
-
-        textEffect(
-            e.x,
-            e.y-20,
-            "electric immune"
-        );
-
-        return;
-
-    }
-
-
-    /*
-      Water immunity.
-    */
-
-    if(
-        type.waterImmune &&
-        b.type==="water"
-    ){
-
-        textEffect(
-            e.x,
-            e.y-20,
-            "water immune"
-        );
-
-        return;
-
-    }
-
-
-    let damage=b.damage;
-
-
-    /*
-      Armor.
-    */
-
-    if(
-        type.armor &&
-        ![
-            "bomb",
-            "missile",
-            "meteor",
-            "nuke",
-            "rail"
-        ].includes(b.type)
-    ){
-
-        damage=
-            Math.max(
-                1,
-                damage*.25
-            );
-
-        if(
-            b.tower.effect &&
-            b.tower.effect.name==="piercing"
-        ){
-
-            damage*=1.8;
-
-        }
-
-    }
-
-
-    /*
-      Shield.
-    */
-
-    if(e.shield>0){
-
-        const absorbed=
-            Math.min(
-                e.shield,
-                damage
-            );
-
-        e.shield-=absorbed;
-
-        damage-=absorbed;
-
-    }
-
-
-    if(damage>0)
-        e.hp-=damage;
-
-
-    /*
-      Slow.
-    */
-
-    if(
-        b.slow &&
-        !type.iceImmune
-    ){
-
-        e.slow=
-            Math.min(
-                e.slow,
-                b.slow
-            );
-
-        setTimeout(function(){
-
-            if(!e.dead)
-                e.slow=1;
-
-        },1200);
-
-    }
-
-
-    /*
-      Splash.
-    */
-
-    if(b.splash){
-
-        for(const other of enemies){
-
-            if(
-                other===e ||
-                other.dead
-            )
-                continue;
-
-            if(
-                distance(
-                    e.x,
-                    e.y,
-                    other.x,
-                    other.y
-                )<=b.splash
-            ){
-
-                let splashDamage=
-                    b.damage*.6;
-
-                if(
-                    enemyTypes[
-                        other.type
-                    ].armor
-                ){
-
-                    splashDamage*=.25;
-
-                }
-
-                other.hp-=splashDamage;
-
-                if(other.hp<=0){
-
-                    killEnemy(
-                        other,
-                        b.tower
-                    );
-
-                }
-
+    enemies=enemies.filter(e=>e.alive);
+
+    for(const tower of towers){
+        const data=towerTypes[tower.type];
+
+        tower.cooldown-=dt*gameSpeed;
+
+        if(data.income && waveRunning){
+            tower.incomeTimer-=dt*gameSpeed;
+            if(tower.incomeTimer<=0){
+                let amt=data.income*tower.incomeMult;
+                if(tower.tradeRoute) amt*=(1+wave*.05);
+                if(tower.bank) tower.storedInterest+=amt*.1;
+                money+=amt+(tower.bank?tower.storedInterest*.02:0);
+                tower.incomeTimer=data.incomeTime*tower.incomeTimeMult;
+                createParticles(tower.x,tower.y,5);
             }
-
         }
 
-    }
-
-
-    hitEffect(
-        e.x,
-        e.y,
-        b.type
-    );
-
-
-    if(e.hp<=0){
-
-        killEnemy(
-            e,
-            b.tower
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-                     KILL ENEMY
-========================================================= */
-
-function killEnemy(e,tower){
-
-    if(e.dead)
-        return;
-
-    e.dead=true;
-
-    money+=e.reward;
-
-    if(tower)
-        tower.kills++;
-
-
-    /*
-      Splitters produce several small enemies.
-    */
-
-    if(
-        enemyTypes[e.type].split
-    ){
-
-        for(let i=0;i<3;i++){
-
-            const child=
-                enemyTypes.swarm;
-
-            enemies.push({
-
-                type:"swarm",
-
-                x:e.x+
-                    Math.random()*16-8,
-
-                y:e.y+
-                    Math.random()*16-8,
-
-                pathIndex:e.pathIndex,
-
-                hp:child.hp,
-                maxHp:child.hp,
-
-                speed:child.speed,
-
-                reward:child.reward,
-
-                shield:0,
-
-                slow:1,
-
-                dead:false,
-
-                distanceTravelled:
-                    e.distanceTravelled,
-
-                regenTimer:0
-
-            });
-
+        if(tower.coreBreach){
+            tower.coreTimer=(tower.coreTimer||0)-dt*gameSpeed;
+            if(tower.coreTimer<=0){
+                for(const e of enemies){
+                    if(!e.alive) continue;
+                    const q=pointOnPath(e.progress);
+                    if(Math.hypot(q.x-tower.x,q.y-tower.y)<=towerTypes.reactor.range*1.4)
+                        damageEnemy(e,600,true);
+                }
+                createParticles(tower.x,tower.y,20);
+                tower.coreTimer=6000;
+            }
         }
 
+        if(tower.auraSlow){
+            for(const e of enemies){
+                if(!e.alive || e.iceImmune) continue;
+                const q=pointOnPath(e.progress);
+                if(Math.hypot(q.x-tower.x,q.y-tower.y)<=tower.auraRange)
+                    e.slow=Math.min(e.slow,1-tower.auraSlow);
+            }
+        }
+
+        if(data.damage && tower.cooldown<=0){
+            const target=getTarget(tower);
+            if(target){
+                fireTower(tower,target);
+                tower.cooldown=data.cooldown/tower.rateMult;
+            }
+        }
     }
 
-}
-
-
-/* =========================================================
-                     UPGRADES
-========================================================= */
-
-function getUpgradeCost(pathNumber,level){
-
-    if(level>=5)
-        return Infinity;
-
-    let base=
-        defaultUpgrades[
-            "path"+
-            (pathNumber+1)
-        ][level].cost;
-
-    /*
-      Higher-tier upgrades become increasingly expensive.
-    */
-
-    base*=
-        1+
-        Math.max(
-            0,
-            wave-10
-        )*.015;
-
-    return Math.floor(base);
-
-}
-
-
-function upgradeTower(pathNumber){
-
-    if(!selectedTower)
-        return;
-
-    const level=
-        selectedTower.level[pathNumber];
-
-    if(level>=5)
-        return;
-
-    const cost=
-        getUpgradeCost(
-            pathNumber,
-            level
-        );
-
-    if(money<cost)
-        return;
-
-    money-=cost;
-
-    selectedTower.invested+=cost;
-
-    selectedTower.level[pathNumber]++;
-
-    /*
-      Unlocking tier 3 of path 3 gives
-      the active ability.
-    */
-
-    if(
-        pathNumber===2 &&
-        selectedTower.level[2]===3
-    ){
-
-        selectedTower.abilityCooldown=0;
-
-        textEffect(
-            selectedTower.x,
-            selectedTower.y-35,
-            "ABILITY READY"
-        );
-
-    }
-
+    updateProjectiles(dt);
+    updateParticles(dt);
     updateUI();
-
 }
-
 
 /* =========================================================
-                    SPECIAL ABILITIES
-========================================================= */
-
-function abilityName(t){
-
-    const theme=
-        upgradeThemes[t.type];
-
-    if(!theme)
-        return "ability";
-
-    return theme.p3;
-
-}
-
-
-function activateAbility(){
-
-    if(!selectedTower)
-        return;
-
-    const t=selectedTower;
-
-    if(t.level[2]<3)
-        return;
-
-    if(t.abilityCooldown>0)
-        return;
-
-    const type=towerTypes[t.type];
-
-    const power=
-        1+
-        t.level[2]*.35;
-
-    t.abilityCooldown=
-        Math.max(
-            5000,
-            18000-
-            t.level[2]*1500
-        );
-
-    t.abilityActive=
-        1800+
-        t.level[2]*500;
-
-    t.abilityUses++;
-
-    /*
-      Different towers have different ability behavior.
-    */
-
-    if(type.farm){
-
-        money+=
-            type.income*
-            10*
-            power;
-
-        textEffect(
-            t.x,
-            t.y-30,
-            abilityName(t)
-        );
-
-    }else{
-
-        for(const e of enemies){
-
-            if(e.dead)
-                continue;
-
-            if(
-                distance(
-                    t.x,
-                    t.y,
-                    e.x,
-                    e.y
-                )<=
-                type.range*
-                towerRangeMultiplier(t)*
-                1.5
-            ){
-
-                e.hp-=
-                    (type.damage||5)*
-                    8*
-                    power;
-
-                if(type.slow){
-
-                    e.slow=
-                        Math.min(
-                            e.slow,
-                            .2
-                        );
-
-                }
-
-                if(e.hp<=0)
-                    killEnemy(e,t);
-
-            }
-
-        }
-
-        textEffect(
-            t.x,
-            t.y-35,
-            abilityName(t)
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-                  ABILITY UPDATE / VISUALS
-========================================================= */
-
-function updateTowerAbilities(dt){
-
-    for(const t of towers){
-
-        if(t.abilityActive>0){
-
-            t.abilityActive-=dt;
-
-            if(t.abilityActive<0)
-                t.abilityActive=0;
-
-        }
-
-    }
-
-}
-
-
-/* =========================================================
-                         SELL
-========================================================= */
-
-function sellTower(){
-
-    if(!selectedTower)
-        return;
-
-    const refund=
-        Math.floor(
-            selectedTower.invested*.70
-        );
-
-    money+=refund;
-
-    towers=
-        towers.filter(
-            t=>t!==selectedTower
-        );
-
-    selectedTower=null;
-
-    updateUI();
-
-}
-
-
-/* =========================================================
-                       EFFECTS
-========================================================= */
-
-function hitEffect(x,y,type){
-
-    visualEffects.push({
-
-        type:"hit",
-        x:x,
-        y:y,
-        radius:5,
-        life:250,
-        maxLife:250,
-        projectile:type
-
-    });
-
-}
-
-
-function textEffect(x,y,text){
-
-    visualEffects.push({
-
-        type:"text",
-        x:x,
-        y:y,
-        text:text,
-        life:800,
-        maxLife:800
-
-    });
-
-}
-
-
-function updateVisualEffects(dt){
-
-    for(const e of visualEffects){
-
-        e.life-=dt;
-
-        if(e.type==="hit")
-            e.radius+=dt*.04;
-
-        if(e.type==="text")
-            e.y-=dt*.025;
-
-    }
-
-    visualEffects=
-        visualEffects.filter(
-            e=>e.life>0
-        );
-
-}
-
-
-/* =========================================================
-                         UI
-========================================================= */
-
-function updateUI(){
-
-    document.getElementById("money").textContent=
-        "Money: "+
-        Math.floor(money);
-
-    document.getElementById("hp").textContent=
-        "HP: "+
-        Math.floor(hp);
-
-    document.getElementById("wave").textContent=
-        "Wave: "+
-        wave;
-
-    document.getElementById("alive").textContent=
-        "Enemies: "+
-        enemies.length;
-
-
-    const upgrades=
-        document.getElementById(
-            "upgradeBox"
-        );
-
-    const sell=
-        document.getElementById(
-            "sellButton"
-        );
-
-    const abilityButton=
-        document.getElementById(
-            "abilityButton"
-        );
-
-    const info=
-        document.getElementById(
-            "towerInfo"
-        );
-
-
-    /*
-      Upgrade controls ONLY appear
-      when a tower is selected.
-    */
-
-    if(selectedTower){
-
-        upgrades.style.display="flex";
-        sell.style.display="inline-block";
-
-        const type=
-            towerTypes[
-                selectedTower.type
-            ];
-
-        let text=
-            "Selected: "+
-            type.name+
-            " | levels "+
-            selectedTower.level.join("-");
-
-
-        if(selectedTower.effect){
-
-            text+=
-                " | effect: "+
-                selectedTower.effect.name+
-                " ("+
-                selectedTower.effect.description+
-                ")";
-
-        }
-
-
-        document.getElementById(
-            "selected"
-        ).textContent=text;
-
-
-        /*
-          Detailed tower information.
-        */
-
-        info.style.display="block";
-
-        let damage=
-            type.damage?
-            type.damage*
-            getPathDamageMultiplier(selectedTower)*
-            towerDamageMultiplier(selectedTower):
-            0;
-
-        let range=
-            type.range*
-            towerRangeMultiplier(selectedTower);
-
-        let rate=
-            type.fireRate?
-            type.fireRate*
-            getFireRateMultiplier(selectedTower):
-            0;
-
-        let extra="";
-
-        if(type.farm){
-
-            extra=
-                " income: "+
-                Math.floor(
-                    type.income*
-                    (
-                        1+
-                        selectedTower.level[0]*.25
-                    )*
-                    (
-                        1+
-                        selectedTower.level[1]*.15
-                    )*
-                    towerIncomeMultiplier(
-                        selectedTower
-                    )
-                )+
-                "/second";
-
-        }
-
-        info.textContent=
-            type.name+
-            " | damage: "+
-            (damage?
-                damage.toFixed(1):
-                "-")+
-            " | range: "+
-            range.toFixed(0)+
-            " | fire rate: "+
-            (rate?
-                rate.toFixed(0)+"ms":
-                "-")+
-            extra+
-            " | kills: "+
-            selectedTower.kills;
-
-
-        /*
-          Upgrade buttons.
-        */
-
-        for(let i=0;i<3;i++){
-
-            const button=
-                document.getElementById(
-                    "upgrade"+i
-                );
-
-            const level=
-                selectedTower.level[i];
-
-
-            if(level>=5){
-
-                button.textContent=
-                    i===2?
-                    "Ability MAX":
-                    "Path "+(i+1)+" MAX";
-
-                button.disabled=true;
-
-            }else{
-
-                const cost=
-                    getUpgradeCost(
-                        i,
-                        level
-                    );
-
-                const upgrade=
-                    defaultUpgrades[
-                        "path"+(i+1)
-                    ][level];
-
-                let name=
-                    upgrade.name;
-
-                if(
-                    i===0 &&
-                    upgradeThemes[
-                        selectedTower.type
-                    ]
-                ){
-
-                    name=
-                        upgradeThemes[
-                            selectedTower.type
-                        ].p1+
-                        " "+
-                        (level+1);
-
-                }
-
-                if(
-                    i===1 &&
-                    upgradeThemes[
-                        selectedTower.type
-                    ]
-                ){
-
-                    name=
-                        upgradeThemes[
-                            selectedTower.type
-                        ].p2+
-                        " "+
-                        (level+1);
-
-                }
-
-                if(
-                    i===2 &&
-                    upgradeThemes[
-                        selectedTower.type
-                    ]
-                ){
-
-                    name=
-                        upgradeThemes[
-                            selectedTower.type
-                        ].p3+
-                        " "+
-                        (level+1);
-
-                }
-
-
-                button.textContent=
-                    name+
-                    " $"+
-                    cost;
-
-                button.disabled=
-                    money<cost;
-
-            }
-
-        }
-
-
-        /*
-          Active ability button.
-        */
-
-        if(selectedTower.level[2]>=3){
-
-            abilityButton.style.display="inline-block";
-
-            abilityButton.textContent=
-                selectedTower.abilityCooldown>0?
-                "Ability cooldown "+
-                Math.ceil(
-                    selectedTower.abilityCooldown/1000
-                )+
-                "s":
-                "Use "+
-                abilityName(selectedTower);
-
-            abilityButton.disabled=
-                selectedTower.abilityCooldown>0;
-
-        }else{
-
-            abilityButton.style.display="none";
-
-        }
-
-    }else{
-
-        upgrades.style.display="none";
-        sell.style.display="none";
-        abilityButton.style.display="none";
-        info.style.display="none";
-
-        if(selectedTowerType){
-
-            document.getElementById(
-                "selected"
-            ).textContent=
-                "Placing: "+
-                towerTypes[
-                    selectedTowerType
-                ].name;
-
-        }else{
-
-            document.getElementById(
-                "selected"
-            ).textContent="";
-
-        }
-
-    }
-
-}
-
-
-/* =========================================================
-                    PAUSE / AUTOPLAY
-========================================================= */
-
-function togglePause(){
-
-    if(!gameRunning)
-        return;
-
-    paused=!paused;
-
-}
-
-
-function toggleAutoplay(){
-
-    autoplay=!autoplay;
-
-    document.getElementById(
-        "auto"
-    ).textContent=
-        autoplay?
-        "ON":
-        "OFF";
-
-}
-
-
-/* =========================================================
-                        DRAW
+   DRAWING
 ========================================================= */
 
 function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle="#fff";
+    ctx.fillRect(0,0,W,H);
 
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+    ctx.strokeStyle="rgba(0,0,0,.06)";
+    ctx.lineWidth=1;
+    for(let x=0;x<W;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for(let y=0;y<H;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
 
-    drawBackground();
+    if(gameState==="menu") return;
+
     drawWater();
     drawPath();
     drawTowers();
     drawEnemies();
-    drawBullets();
-    drawEffects();
+    drawProjectiles();
+    drawParticles();
 
-    if(paused){
-
-        ctx.font="42px Arial";
-
-        ctx.fillText(
-            "PAUSED",
-            650,
-            400
-        );
-
-    }
-
+    if(selectedTowerType) drawPlacementPreview();
 }
-
-
-/* =========================================================
-                    BACKGROUND
-========================================================= */
-
-function drawBackground(){
-
-    ctx.fillStyle="white";
-
-    ctx.fillRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-}
-
-
-/* =========================================================
-                        WATER
-========================================================= */
 
 function drawWater(){
-
-    ctx.strokeStyle="black";
-    ctx.fillStyle="white";
-
-    for(const z of water){
-
-        ctx.strokeRect(
-            z.x,
-            z.y,
-            z.w,
-            z.h
-        );
-
-        ctx.font="16px Arial";
-
-        ctx.fillText(
-            "water",
-            z.x+10,
-            z.y+22
-        );
-
+    for(const r of currentWater){
+        const x=r.x*W, y=r.y*H, w=r.w*W, h=r.h*H;
+        ctx.strokeStyle="rgba(20,90,150,.7)";
+        ctx.lineWidth=1.5;
+        ctx.strokeRect(x,y,w,h);
+        ctx.strokeStyle="rgba(20,90,150,.3)";
+        ctx.lineWidth=1;
+        for(let yy=y+12;yy<y+h;yy+=12){
+            ctx.beginPath(); ctx.moveTo(x+5,yy); ctx.lineTo(x+w-5,yy); ctx.stroke();
+        }
     }
-
 }
-
-
-/* =========================================================
-                         PATH
-========================================================= */
 
 function drawPath(){
-
-    ctx.lineCap="round";
-    ctx.lineJoin="round";
-
     ctx.beginPath();
-
-    ctx.moveTo(
-        path[0][0],
-        path[0][1]
-    );
-
-    for(let i=1;i<path.length;i++){
-
-        ctx.lineTo(
-            path[i][0],
-            path[i][1]
-        );
-
+    for(let i=0;i<currentPath.length;i++){
+        const p=currentPath[i];
+        const x=p.x*W, y=p.y*H;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
-
-    ctx.lineWidth=54;
-    ctx.strokeStyle="black";
+    ctx.strokeStyle="#000";
+    ctx.lineWidth=3;
+    ctx.lineCap="round"; ctx.lineJoin="round";
     ctx.stroke();
 
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        path[0][0],
-        path[0][1]
-    );
-
-    for(let i=1;i<path.length;i++){
-
-        ctx.lineTo(
-            path[i][0],
-            path[i][1]
-        );
-
-    }
-
-    ctx.lineWidth=46;
-    ctx.strokeStyle="white";
-    ctx.stroke();
-
-    ctx.lineCap="butt";
-    ctx.lineJoin="miter";
-
+    const start=currentPath[0], end=currentPath[currentPath.length-1];
+    ctx.fillStyle="#000";
+    ctx.beginPath(); ctx.arc(start.x*W,start.y*H,5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(end.x*W,end.y*H,5,0,Math.PI*2); ctx.fill();
 }
-
-
-/* =========================================================
-                         TOWERS
-========================================================= */
 
 function drawTowers(){
+    for(const tower of towers){
+        const data=towerTypes[tower.type];
 
-    ctx.textAlign="center";
-
-    for(const t of towers){
-
-        const type=
-            towerTypes[t.type];
-
-
-        /*
-          RANGE CIRCLE
-        */
-
-        if(selectedTower===t){
-
+        if(tower===selectedTower){
+            ctx.strokeStyle="rgba(0,0,0,.4)";
+            ctx.lineWidth=1;
             ctx.beginPath();
-
-            ctx.arc(
-                t.x,
-                t.y,
-                type.range*
-                towerRangeMultiplier(t),
-                0,
-                Math.PI*2
-            );
-
+            ctx.arc(tower.x,tower.y,data.range*tower.rangeMult,0,Math.PI*2);
             ctx.stroke();
 
-
-            /*
-              PHYSICAL HITBOX
-            */
-
+            // hitbox circle (visual only)
+            ctx.setLineDash([4,4]);
+            ctx.strokeStyle="rgba(255,180,120,.55)";
             ctx.beginPath();
-
-            ctx.arc(
-                t.x,
-                t.y,
-                22,
-                0,
-                Math.PI*2
-            );
-
+            ctx.arc(tower.x,tower.y,(data.splash||22)*.6*tower.splashMult,0,Math.PI*2);
             ctx.stroke();
-
+            ctx.setLineDash([]);
         }
 
-
-        /*
-          Ability visual.
-        */
-
-        if(t.abilityActive>0){
-
+        if(tower.blessing){
+            ctx.strokeStyle=tower.blessing.color;
+            ctx.lineWidth=2;
             ctx.beginPath();
-
-            ctx.arc(
-                t.x,
-                t.y,
-                32+
-                t.level[2]*5,
-                0,
-                Math.PI*2
-            );
-
+            ctx.arc(tower.x,tower.y,19,0,Math.PI*2);
             ctx.stroke();
-
-            ctx.beginPath();
-
-            ctx.arc(
-                t.x,
-                t.y,
-                42+
-                t.level[2]*6,
-                0,
-                Math.PI*2
-            );
-
-            ctx.stroke();
-
         }
 
+        ctx.fillStyle="#1b232c";
+        ctx.strokeStyle=data.color;
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.arc(tower.x,tower.y,15,0,Math.PI*2);
+        ctx.fill(); ctx.stroke();
 
-        /*
-          Third-path permanent visual.
-        */
+        ctx.fillStyle=data.color;
+        ctx.font="bold 12px Arial";
+        ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText(data.icon,tower.x,tower.y);
 
-        if(t.level[2]>0){
+        ctx.font="9px sans-serif";
+        ctx.fillStyle="#333";
+        ctx.fillText(data.name,tower.x,tower.y+26);
 
-            ctx.beginPath();
-
-            ctx.arc(
-                t.x,
-                t.y,
-                27+
-                t.level[2]*3,
-                0,
-                Math.PI*2
-            );
-
-            ctx.stroke();
-
+        if(data.income){
+            ctx.font="10px Arial";
+            ctx.fillStyle="#b8c9a9";
+            ctx.fillText("$",tower.x,tower.y-23);
         }
-
-
-        ctx.font="16px Arial";
-
-        ctx.fillText(
-            type.name,
-            t.x,
-            t.y+5
-        );
-
-
-        /*
-          Tower effect above tower.
-        */
-
-        if(t.effect){
-
-            ctx.font="11px Arial";
-
-            ctx.fillText(
-                t.effect.name,
-                t.x,
-                t.y-15
-            );
-
-        }
-
     }
-
-    ctx.textAlign="left";
-
 }
-
-
-/* =========================================================
-                        ENEMIES
-========================================================= */
 
 function drawEnemies(){
-
-    ctx.textAlign="center";
-
     for(const e of enemies){
-
-        const type=
-            enemyTypes[e.type];
-
-
-        /*
-          Main enemy name.
-        */
-
-        let enemyName="enemy";
-
-        /*
-          Animals/creatures are represented
-          by what they do rather than merely
-          naming the animal.
-        */
-
-        if(e.type==="flying")
-            enemyName="flying";
-
-        if(e.type==="giant")
-            enemyName="giant";
-
-        if(e.type==="swarm")
-            enemyName="swarm";
-
-        if(type.boss)
-            enemyName="BOSS";
-
-
-        ctx.font=
-            Math.max(
-                12,
-                type.size
-            )+
-            "px Arial";
-
-
-        ctx.fillText(
-            enemyName,
-            e.x,
-            e.y
-        );
-
-
-        /*
-          Normal enemies have NO label.
-        */
-
-        if(
-            e.type!=="normal" &&
-            type.label
-        ){
-
-            ctx.font="12px Arial";
-
-            ctx.fillStyle=
-                type.color||
-                "black";
-
-            ctx.fillText(
-                type.label,
-                e.x,
-                e.y-type.size-6
-            );
-
-            ctx.fillStyle="black";
-
-        }
-
-
-        /*
-          HP BAR
-        */
-
-        ctx.strokeRect(
-            e.x-20,
-            e.y+11,
-            40,
-            4
-        );
-
-        ctx.fillRect(
-            e.x-20,
-            e.y+11,
-            40*
-            Math.max(
-                0,
-                e.hp/e.maxHp
-            ),
-            4
-        );
-
-
-        /*
-          Shield.
-        */
-
-        if(e.shield>0){
-
-            ctx.beginPath();
-
-            ctx.arc(
-                e.x,
-                e.y,
-                type.size+7,
-                0,
-                Math.PI*2
-            );
-
-            ctx.stroke();
-
-        }
-
-
-        /*
-          Boss bar.
-        */
-
-        if(type.boss){
-
-            ctx.strokeRect(
-                e.x-60,
-                e.y-65,
-                120,
-                8
-            );
-
-            ctx.fillRect(
-                e.x-60,
-                e.y-65,
-                120*
-                Math.max(
-                    0,
-                    e.hp/e.maxHp
-                ),
-                8
-            );
-
-        }
-
-    }
-
-    ctx.textAlign="left";
-
-}
-
-
-/* =========================================================
-                       PROJECTILES
-========================================================= */
-
-function drawBullets(){
-
-    ctx.textAlign="center";
-
-    for(const b of bullets){
-
-        ctx.font="12px Arial";
-
-        ctx.fillText(
-            b.type,
-            b.x,
-            b.y
-        );
-
-    }
-
-    ctx.textAlign="left";
-
-}
-
-
-/* =========================================================
-                        EFFECTS
-========================================================= */
-
-function drawEffects(){
-
-    for(const e of visualEffects){
-
-        ctx.globalAlpha=
-            e.life/e.maxLife;
-
-
-        if(e.type==="hit"){
-
-            ctx.beginPath();
-
-            ctx.arc(
-                e.x,
-                e.y,
-                e.radius,
-                0,
-                Math.PI*2
-            );
-
-            ctx.stroke();
-
-        }else{
-
-            ctx.font="13px Arial";
-
-            ctx.fillText(
-                e.text,
-                e.x,
-                e.y
-            );
-
-        }
-
+        const p=pointOnPath(e.progress);
+        const t=enemyTypes[e.type];
+
+        ctx.globalAlpha = t.alpha || 1;
+
+        ctx.fillStyle=t.color;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,e.radius,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.strokeStyle="#26313b";
+        ctx.lineWidth=2;
+        ctx.stroke();
 
         ctx.globalAlpha=1;
 
-    }
+        const barW=e.radius*2.5;
+        const hp=e.hp/e.maxHp;
+        ctx.fillStyle="#222";
+        ctx.fillRect(p.x-barW/2,p.y-e.radius-8,barW,3);
+        ctx.fillStyle="#aebcc6";
+        ctx.fillRect(p.x-barW/2,p.y-e.radius-8,barW*Math.max(0,hp),3);
 
+        if(t.label){
+            ctx.font="bold 9px Arial";
+            ctx.fillStyle=t.labelColor;
+            ctx.textAlign="center";
+            ctx.fillText(t.label,p.x,p.y-e.radius-13);
+        }
+    }
 }
 
+function drawProjectiles(){
+    for(const p of projectiles){
+        ctx.fillStyle="#000";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,3,0,Math.PI*2);
+        ctx.fill();
+    }
+}
 
-/* =========================================================
-                   PLACEMENT PREVIEW
-========================================================= */
+function drawParticles(){
+    for(const p of particles){
+        ctx.globalAlpha=Math.max(0,p.life);
+        ctx.fillStyle="#555";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,2.5,0,Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha=1;
+    }
+}
+
+let mouseX=0, mouseY=0;
 
 function drawPlacementPreview(){
+    const data=towerTypes[selectedTowerType];
+    const valid=canPlace(mouseX,mouseY,selectedTowerType);
 
-    if(!selectedTowerType)
-        return;
+    ctx.globalAlpha=.35;
+    ctx.fillStyle=valid ? "#000" : "#aaa";
+    ctx.beginPath(); ctx.arc(mouseX,mouseY,15,0,Math.PI*2); ctx.fill();
 
-    const type=
-        towerTypes[
-            selectedTowerType
-        ];
+    ctx.globalAlpha=.25;
+    ctx.strokeStyle=valid ? "#000" : "#aaa";
+    ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(mouseX,mouseY,data.range,0,Math.PI*2); ctx.stroke();
 
-    ctx.globalAlpha=.6;
-
-
-    /*
-      Range.
-    */
-
-    ctx.beginPath();
-
-    ctx.arc(
-        mouseX,
-        mouseY,
-        type.range,
-        0,
-        Math.PI*2
-    );
-
-    ctx.stroke();
-
-
-    /*
-      Hitbox.
-    */
-
-    ctx.beginPath();
-
-    ctx.arc(
-        mouseX,
-        mouseY,
-        22,
-        0,
-        Math.PI*2
-    );
-
-    ctx.stroke();
-
-
-    ctx.font="14px Arial";
-
-    ctx.fillText(
-        type.name,
-        mouseX,
-        mouseY
-    );
+    ctx.setLineDash([4,4]);
+    ctx.strokeStyle="rgba(255,180,120,.5)";
+    ctx.beginPath(); ctx.arc(mouseX,mouseY,(data.splash||22)*.6,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
 
     ctx.globalAlpha=1;
-
 }
 
-
 /* =========================================================
-                       HELPERS
+   INPUT
 ========================================================= */
 
-function distance(
-    x1,
-    y1,
-    x2,
-    y2
-){
+canvas.addEventListener("mousemove",e=>{
+    const rect=canvas.getBoundingClientRect();
+    mouseX=e.clientX-rect.left;
+    mouseY=e.clientY-rect.top;
+});
 
-    const dx=x2-x1;
-    const dy=y2-y1;
+canvas.addEventListener("click",e=>{
+    if(gameState!=="playing") return;
 
-    return Math.sqrt(
-        dx*dx+
-        dy*dy
-    );
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left, y=e.clientY-rect.top;
 
-}
-
-
-/* =========================================================
-                       KEYBOARD
-========================================================= */
-
-document.addEventListener(
-    "keydown",
-    function(e){
-
-        if(e.key===" ")
-            togglePause();
-
-        if(
-            e.key.toLowerCase()==="r" &&
-            gameRunning
-        )
-            restartGame();
-
-        if(
-            e.key==="Enter" &&
-            gameRunning
-        )
-            startWave();
-
+    for(let i=towers.length-1;i>=0;i--){
+        const tower=towers[i];
+        if(Math.hypot(x-tower.x,y-tower.y)<=18){
+            selectedTower=tower;
+            selectedTowerType=null;
+            showSelectedInfo(tower);
+            renderTowerList();
+            return;
+        }
     }
-);
 
+    if(selectedTowerType){ placeTower(x,y); return; }
+
+    selectedTower=null;
+    hideSelectedInfo();
+});
+
+canvas.addEventListener("contextmenu",e=>{
+    e.preventDefault();
+    if(gameState!=="playing") return;
+
+    const rect=canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left, y=e.clientY-rect.top;
+
+    for(let i=towers.length-1;i>=0;i--){
+        const tower=towers[i];
+        if(Math.hypot(x-tower.x,y-tower.y)<=20){
+            const data=towerTypes[tower.type];
+            money+=Math.floor(data.cost*.7);
+            towers.splice(i,1);
+            selectedTower=null;
+            hideSelectedInfo();
+            setMessage(`${data.name} sold.`);
+            renderTowerList();
+            updateUI();
+            return;
+        }
+    }
+});
+
+document.getElementById("startWave").addEventListener("click",startWave);
+
+document.getElementById("speedSlider").addEventListener("input",e=>{
+    gameSpeed=Number(e.target.value);
+    document.getElementById("speedLabel").textContent=gameSpeed+"x";
+});
+
+document.getElementById("autoToggle").addEventListener("change",e=>{
+    autoplay=e.target.checked;
+    autoplayTimer=1200;
+    setMessage(autoplay ? "Autoplay enabled." : "Autoplay disabled.");
+});
 
 /* =========================================================
-                       GAME LOOP
+   SELECTED INFO / UPGRADE PANEL
 ========================================================= */
 
-function gameLoop(now){
+function showSelectedInfo(tower){
+    const box=document.getElementById("selectedInfo");
+    const data=towerTypes[tower.type];
 
-    const dt=
-        Math.min(
-            50,
-            now-lastTime
-        );
+    box.style.display="block";
 
+    let html=`<b style="color:${data.color}">${data.name}</b>`;
+    html+=`<div class="row">Placed: ${getTowerCount(tower.type)}/${data.limit}</div>`;
+    if(data.damage) html+=`<div class="row">Damage: ${Math.round(data.damage*tower.dmgMult)}</div>`;
+    if(data.range) html+=`<div class="row">Range: ${Math.round(data.range*tower.rangeMult)}</div>`;
+    if(data.income) html+=`<div class="row">Income: $${Math.round(data.income*tower.incomeMult)} / active-wave tick</div>`;
+    if(tower.blessing) html+=`<div class="blessTag">✦ ${tower.blessing.name}: ${tower.blessing.desc}</div>`;
+
+    ["A","B"].forEach(pathKey=>{
+        const path=data.upgrades[pathKey];
+        const levelProp = pathKey==="A" ? "pathALevel" : "pathBLevel";
+        const level=tower[levelProp];
+
+        html+=`<div class="pathBox"><h4 style="color:${path.color}">${path.name} (${level}/${path.tiers.length})</h4>`;
+
+        if(level<path.tiers.length){
+            const tier=path.tiers[level];
+            html+=`<div class="pathTier">${tier.desc}</div>`;
+            html+=`<button class="upgBtn" data-tower="${tower.id}" data-path="${pathKey}" ${money<tier.cost?"disabled":""}>Upgrade — $${tier.cost}</button>`;
+        }else{
+            html+=`<div class="pathTier">Maxed out.</div>`;
+        }
+        html+="</div>";
+    });
+
+    html+=`<button class="sellBtn" id="sellSelectedBtn">Sell for $${Math.floor(data.cost*.7)}</button>`;
+
+    box.innerHTML=html;
+
+    box.querySelectorAll(".upgBtn").forEach(btn=>{
+        btn.addEventListener("click",()=>{
+            upgradeTower(tower,btn.dataset.path);
+        });
+    });
+
+    const sellBtn=document.getElementById("sellSelectedBtn");
+    if(sellBtn){
+        sellBtn.addEventListener("click",()=>{
+            const idx=towers.indexOf(tower);
+            if(idx>=0){
+                money+=Math.floor(data.cost*.7);
+                towers.splice(idx,1);
+                selectedTower=null;
+                hideSelectedInfo();
+                setMessage(`${data.name} sold.`);
+                renderTowerList();
+                updateUI();
+            }
+        });
+    }
+}
+
+function hideSelectedInfo(){
+    document.getElementById("selectedInfo").style.display="none";
+}
+
+/* =========================================================
+   UI
+========================================================= */
+
+function updateUI(){
+    document.getElementById("money").textContent=Math.floor(money);
+    document.getElementById("lives").textContent=Math.max(0,Math.floor(lives));
+    document.getElementById("wave").textContent=wave;
+    document.getElementById("startWave").disabled = waveRunning || gameState!=="playing";
+
+    if(selectedTower && towers.includes(selectedTower)) showSelectedInfo(selectedTower);
+    else if(selectedTower) hideSelectedInfo();
+}
+
+function setMessage(text){
+    document.getElementById("message").textContent=text;
+}
+
+/* =========================================================
+   MAIN LOOP
+========================================================= */
+
+let lastTime=performance.now();
+
+function loop(now){
+    let dt=now-lastTime;
     lastTime=now;
+    dt=Math.min(dt,50);
 
     update(dt);
-
     draw();
 
-    drawPlacementPreview();
-
-    requestAnimationFrame(
-        gameLoop
-    );
-
+    requestAnimationFrame(loop);
 }
 
-
-updateMenu();
-
-requestAnimationFrame(
-    gameLoop
-);
+renderTowerList();
+updateUI();
+requestAnimationFrame(loop);
 
 </script>
-
 </body>
 </html>
