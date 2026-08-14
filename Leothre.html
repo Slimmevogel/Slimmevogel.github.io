@@ -1,3 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Line Defense</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#fff;color:#000}
+button,input{font:inherit}
+#game{width:100vw;height:100vh;display:flex;flex-direction:column;position:relative}
+
+/* ============ TOP BAR ============ */
+#topbar{
+    flex:0 0 auto;display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:6px;z-index:20;
+    border-bottom:1px solid #000;
+}
+#title{font-weight:bold;margin-right:6px}
+.stat{border:1px solid #000;padding:2px 6px}
+.topBtn{border:1px solid #000;background:#fff;padding:3px 8px}
+.topBtn:hover{background:#eee}
+#speedWrap{display:flex;align-items:center;gap:4px;border:1px solid #000;padding:2px 6px}
+#speedWrap input[type=range]{width:80px}
+#speedLabel{min-width:20px;text-align:center}
+#autoWrap{display:flex;align-items:center;gap:4px;border:1px solid #000;padding:2px 6px}
+#spacer{flex:1}
+
+/* ============ MAIN ============ */
+#main{flex:1;min-height:0;display:flex}
+#canvasWrap{position:relative;flex:1;min-width:0;overflow:hidden;background:#fff}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+
+/* ============ TOWER PANEL ============ */
+#towerPanel{width:280px;flex:0 0 280px;border-left:1px solid #000;display:flex;flex-direction:column;z-index:15}
+#towerHeader{padding:8px;border-bottom:1px solid #000}
+#towerHeader h2{margin:0 0 6px;font-size:15px}
+#filters{display:flex;flex-wrap:wrap;gap:4px}
+.filterBtn{border:1px solid #000;background:#fff;padding:3px 7px;font-size:11px}
+.filterBtn.active{background:#000;color:#fff}
+#towerList{flex:1;overflow-y:auto;padding:6px}
+.towerCard{border:1px solid #000;padding:7px;margin-bottom:6px}
+.towerCard:hover{background:#f2f2f2}
+.towerCard.selected{background:#e6e6e6;border-width:2px}
+.towerCard.disabled{opacity:.4;cursor:not-allowed}
+.towerTop{display:flex;align-items:center;gap:7px}
+.towerIcon{width:26px;height:26px;border:1px solid #000;display:grid;place-items:center;font-weight:bold;font-size:13px;flex:0 0 26px}
+.towerName{font-weight:bold;flex:1;font-size:13px}
+.limit{font-size:11px}
+.towerDesc{font-size:11px;margin-top:4px;line-height:1.3}
+.towerCost{margin-top:5px;font-size:11px}
+
+/* ============ SELECTED INFO ============ */
+#selectedInfo{
+    position:absolute;left:8px;top:8px;background:#fff;border:1px solid #000;
+    padding:9px;width:225px;z-index:8;display:none;font-size:12px;
+}
+#selectedInfo b{display:block;margin-bottom:5px;font-size:14px}
+#selectedInfo .row{margin-bottom:3px}
+.pathBox{border:1px solid #000;padding:6px;margin-top:7px}
+.pathBox h4{margin:0 0 4px;font-size:11.5px}
+.pathTier{font-size:10.5px;margin-bottom:4px;line-height:1.3}
+.upgBtn{width:100%;border:1px solid #000;background:#fff;padding:4px 6px;font-size:11px;margin-top:2px}
+.upgBtn:hover{background:#eee}
+.upgBtn:disabled{opacity:.4;cursor:not-allowed}
+.sellBtn{width:100%;border:1px solid #000;background:#fff;padding:5px;font-size:11.5px;margin-top:8px}
+.sellBtn:hover{background:#eee}
+.blessTag{display:inline-block;margin-top:6px;padding:1px 5px;border:1px solid #000;font-size:10px}
+
+/* ============ BOTTOM / MESSAGE ============ */
+#bottom{position:absolute;left:8px;right:8px;bottom:8px;pointer-events:none;z-index:10}
+#message{display:inline-block;background:#fff;border:1px solid #000;padding:5px 8px;font-size:12.5px}
+#startWave{position:absolute;right:8px;bottom:8px;z-index:12;border:1px solid #000;background:#fff;padding:8px 14px}
+#startWave:hover{background:#eee}
+#startWave:disabled{opacity:.4;cursor:not-allowed}
+#help{position:absolute;right:8px;top:8px;background:#fff;border:1px solid #000;padding:5px 8px;font-size:10.5px;pointer-events:none;text-align:right}
+
+/* ============ MENU ============ */
+#menuOverlay{
+    position:absolute;inset:0;background:#fff;z-index:100;display:flex;align-items:center;justify-content:center;
+}
+#menuOverlay.hidden{display:none}
+#menuBox{width:640px;max-width:92vw;border:1px solid #000;padding:24px}
+#menuBox h1{margin:0 0 4px;font-size:24px}
+#menuBox .sub{font-size:13px;margin-bottom:18px}
+.menuSection{margin-bottom:16px}
+.menuSection h3{margin:0 0 7px;font-size:13px;text-transform:uppercase}
+.optGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.optBtn{border:1px solid #000;background:#fff;padding:10px 6px;text-align:center;font-size:12.5px}
+.optBtn:hover{background:#eee}
+.optBtn.active{background:#000;color:#fff}
+.optBtn .big{display:block;font-size:14px;font-weight:bold;margin-bottom:3px}
+.optBtn small{font-size:10.5px}
+#menuSummary{margin:12px 0;padding:8px 10px;border:1px solid #000;font-size:12.5px;min-height:18px}
+#startGameBtn{width:100%;border:1px solid #000;background:#fff;padding:12px;font-size:15px;font-weight:bold}
+#startGameBtn:hover{background:#eee}
+#startGameBtn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ============ PAUSE OVERLAY ============ */
+#pauseOverlay{
+    position:absolute;inset:0;background:rgba(255,255,255,.9);z-index:90;display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:10px;
+}
+#pauseOverlay.show{display:flex}
+#pauseOverlay .pauseBtn{border:1px solid #000;background:#fff;padding:10px 24px;font-size:14px;width:220px}
+#pauseOverlay .pauseBtn:hover{background:#eee}
+#pauseOverlay h2{margin:0 0 6px;font-size:22px}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<div id="topbar">
+    <div id="title">LINE DEFENSE</div>
+    <button class="topBtn" id="restartBtn">⟲ Restart</button>
+    <button class="topBtn" id="pauseBtn">⏸ Pause</button>
+    <button class="topBtn" id="menuBtn">☰ Menu</button>
+
+    <div id="spacer"></div>
+
+    <div class="stat">💰 <span id="money">0</span></div>
+    <div class="stat">❤️ <span id="lives">0</span></div>
+    <div class="stat">🌊 Wave <span id="wave">0</span></div>
+
+    <div id="speedWrap">
+        <span style="font-size:11px">Speed</span>
+        <input type="range" id="speedSlider" min="1" max="4" step="1" value="1">
+        <span id="speedLabel">1x</span>
+    </div>
+
+    <label id="autoWrap">
+        <input type="checkbox" id="autoToggle">
+        Autoplay
+    </label>
+</div>
+
+<div id="main">
+
+<div id="canvasWrap">
+
+    <canvas id="canvas"></canvas>
+
+    <div id="selectedInfo"></div>
+
+    <div id="help">
+        Select a tower → click a valid spot<br>
+        Right-click a placed tower to sell
+    </div>
+
+    <button id="startWave">START WAVE</button>
+
+    <div id="bottom">
+        <div id="message">Build your defenses.</div>
+    </div>
+
+    <div id="pauseOverlay">
+        <h2>Paused</h2>
+        <button class="pauseBtn" id="resumeBtn">Resume</button>
+        <button class="pauseBtn" id="restartFromPauseBtn">Restart Level</button>
+        <button class="pauseBtn" id="menuFromPauseBtn">Back to Menu</button>
+    </div>
+
+</div>
+
+<aside id="towerPanel">
+
+    <div id="towerHeader">
+        <h2>Towers</h2>
+
+        <div id="filters">
+            <button class="filterBtn active" data-filter="all">All</button>
+            <button class="filterBtn" data-filter="damage">Damage</button>
+            <button class="filterBtn" data-filter="support">Support</button>
+            <button class="filterBtn" data-filter="farm">Farm</button>
+            <button class="filterBtn" data-filter="special">Special</button>
+            <button class="filterBtn" data-filter="water">Water</button>
+        </div>
+    </div>
+
+    <div id="towerList"></div>
+
+</aside>
+
+</div>
+</div>
+
+<div id="menuOverlay">
+
+    <div id="menuBox">
+
+        <h1>LINE DEFENSE</h1>
+        <div class="sub">Pick a difficulty and a route, then start.</div>
+
+        <div class="menuSection">
+            <h3>Difficulty</h3>
+            <div class="optGrid" id="diffGrid"></div>
+        </div>
+
+        <div class="menuSection">
+            <h3>Route</h3>
+            <div class="optGrid" id="levelGrid"></div>
+        </div>
+
+        <div id="menuSummary">
+            Select a difficulty and a route.
+        </div>
+
+        <button id="startGameBtn" disabled>START GAME</button>
+
+    </div>
+
+</div>
+
 <script>
 "use strict";
 
@@ -16,34 +230,72 @@ const levels = [
     {
         name:"Level 1 · Straight Line",
         path:[
-            {x:0,y:.5},{x:.15,y:.5},{x:.15,y:.2},{x:.4,y:.2},{x:.4,y:.8},
-            {x:.65,y:.8},{x:.65,y:.35},{x:.85,y:.35},{x:.85,y:.65},{x:1,y:.65}
+            {x:0,y:.5},
+            {x:.15,y:.5},
+            {x:.15,y:.2},
+            {x:.4,y:.2},
+            {x:.4,y:.8},
+            {x:.65,y:.8},
+            {x:.65,y:.35},
+            {x:.85,y:.35},
+            {x:.85,y:.65},
+            {x:1,y:.65}
         ],
         water:[{x:.5,y:.55,w:.15,h:.14}]
     },
+
     {
         name:"Level 2 · Zig Zag",
         path:[
-            {x:0,y:.15},{x:.2,y:.15},{x:.2,y:.85},{x:.35,y:.85},{x:.35,y:.35},
-            {x:.5,y:.35},{x:.5,y:.9},{x:.68,y:.9},{x:.68,y:.1},{x:.85,y:.1},
-            {x:.85,y:.55},{x:1,y:.55}
+            {x:0,y:.15},
+            {x:.2,y:.15},
+            {x:.2,y:.85},
+            {x:.35,y:.85},
+            {x:.35,y:.35},
+            {x:.5,y:.35},
+            {x:.5,y:.9},
+            {x:.68,y:.9},
+            {x:.68,y:.1},
+            {x:.85,y:.1},
+            {x:.85,y:.55},
+            {x:1,y:.55}
         ],
         water:[{x:.42,y:.5,w:.14,h:.13}]
     },
+
     {
         name:"Level 3 · Twin Lakes",
         path:[
-            {x:0,y:.5},{x:.12,y:.5},{x:.12,y:.12},{x:.55,y:.12},{x:.55,y:.5},
-            {x:.3,y:.5},{x:.3,y:.85},{x:.75,y:.85},{x:.75,y:.3},{x:.9,y:.3},
-            {x:.9,y:.65},{x:1,y:.65}
+            {x:0,y:.5},
+            {x:.12,y:.5},
+            {x:.12,y:.12},
+            {x:.55,y:.12},
+            {x:.55,y:.5},
+            {x:.3,y:.5},
+            {x:.3,y:.85},
+            {x:.75,y:.85},
+            {x:.75,y:.3},
+            {x:.9,y:.3},
+            {x:.9,y:.65},
+            {x:1,y:.65}
         ],
-        water:[{x:.4,y:.62,w:.12,h:.12},{x:.62,y:.15,w:.11,h:.1}]
+        water:[
+            {x:.4,y:.62,w:.12,h:.12},
+            {x:.62,y:.15,w:.11,h:.1}
+        ]
     },
+
     {
         name:"Level 4 · Canyon Run",
         path:[
-            {x:0,y:.3},{x:.3,y:.3},{x:.3,y:.75},{x:.55,y:.75},{x:.55,y:.15},
-            {x:.8,y:.15},{x:.8,y:.55},{x:1,y:.55}
+            {x:0,y:.3},
+            {x:.3,y:.3},
+            {x:.3,y:.75},
+            {x:.55,y:.75},
+            {x:.55,y:.15},
+            {x:.8,y:.15},
+            {x:.8,y:.55},
+            {x:1,y:.55}
         ],
         water:[{x:.62,y:.65,w:.14,h:.16}]
     }
@@ -60,6 +312,7 @@ let W=1000, H=700;
 
 function resize(){
     const rect = canvas.getBoundingClientRect();
+
     W = Math.max(600, rect.width);
     H = Math.max(400, rect.height);
 
@@ -116,21 +369,20 @@ const menuSummary = document.getElementById("menuSummary");
 const startGameBtn = document.getElementById("startGameBtn");
 
 Object.entries(difficulties).forEach(([key,d])=>{
+
     const btn=document.createElement("button");
 
     btn.className="optBtn";
 
-    btn.innerHTML=`
-        <span class="big">${d.icon} ${d.name}</span>
-        <small>${d.startLives} HP</small>
-    `;
+    btn.innerHTML=
+        `<span class="big">${d.icon} ${d.name}</span>
+         <small>${d.startLives} HP</small>`;
 
     btn.addEventListener("click",()=>{
+
         chosenDiff=key;
 
-        [...diffGrid.children].forEach(b=>{
-            b.classList.remove("active");
-        });
+        [...diffGrid.children].forEach(b=>b.classList.remove("active"));
 
         btn.classList.add("active");
 
@@ -141,21 +393,20 @@ Object.entries(difficulties).forEach(([key,d])=>{
 });
 
 levels.forEach((lvl,i)=>{
+
     const btn=document.createElement("button");
 
     btn.className="optBtn";
 
-    btn.innerHTML=`
-        <span class="big">Route ${i+1}</span>
-        <small>${lvl.name.split("·")[1]||""}</small>
-    `;
+    btn.innerHTML=
+        `<span class="big">Route ${i+1}</span>
+         <small>${lvl.name.split("·")[1]||""}</small>`;
 
     btn.addEventListener("click",()=>{
+
         chosenLevel=i;
 
-        [...levelGrid.children].forEach(b=>{
-            b.classList.remove("active");
-        });
+        [...levelGrid.children].forEach(b=>b.classList.remove("active"));
 
         btn.classList.add("active");
 
@@ -190,7 +441,8 @@ function updateMenuSummary(){
 
     }else{
 
-        menuSummary.textContent="Select a difficulty and a route.";
+        menuSummary.textContent=
+            "Select a difficulty and a route.";
 
         startGameBtn.disabled=true;
     }
@@ -200,39 +452,45 @@ startGameBtn.addEventListener("click",()=>{
     beginNewGame();
 });
 
-document.getElementById("menuBtn").addEventListener("click",()=>{
-    openMenu();
-});
+document.getElementById("menuBtn").addEventListener("click",()=>openMenu());
 
-document.getElementById("menuFromPauseBtn").addEventListener("click",()=>{
-    openMenu();
-});
+document.getElementById("menuFromPauseBtn")
+    .addEventListener("click",()=>openMenu());
 
-document.getElementById("restartBtn").addEventListener("click",()=>{
-    if(chosenDiff!==null) beginNewGame(true);
-});
+document.getElementById("restartBtn")
+    .addEventListener("click",()=>{
+        if(chosenDiff!==null) beginNewGame(true);
+    });
 
-document.getElementById("restartFromPauseBtn").addEventListener("click",()=>{
-    beginNewGame(true);
-});
+document.getElementById("restartFromPauseBtn")
+    .addEventListener("click",()=>{
+        beginNewGame(true);
+    });
 
-document.getElementById("pauseBtn").addEventListener("click",()=>{
-    togglePause();
-});
+document.getElementById("pauseBtn")
+    .addEventListener("click",()=>togglePause());
 
-document.getElementById("resumeBtn").addEventListener("click",()=>{
-    togglePause();
-});
+document.getElementById("resumeBtn")
+    .addEventListener("click",()=>togglePause());
 
 function openMenu(){
 
     gameState="menu";
 
-    cancelTowerPlacement();
+    /* PLACEMENT FIX:
+       Leaving the game/menu always cancels placement. */
+    selectedTowerType=null;
+    selectedTower=null;
 
-    document.getElementById("menuOverlay").classList.remove("hidden");
+    hideSelectedInfo();
 
-    document.getElementById("pauseOverlay").classList.remove("show");
+    document.getElementById("menuOverlay")
+        .classList.remove("hidden");
+
+    document.getElementById("pauseOverlay")
+        .classList.remove("show");
+
+    renderTowerList();
 }
 
 function togglePause(){
@@ -241,17 +499,22 @@ function togglePause(){
 
         gameState="paused";
 
-        cancelTowerPlacement();
+        /* PLACEMENT FIX */
+        selectedTowerType=null;
+        renderTowerList();
 
-        document.getElementById("pauseOverlay").classList.add("show");
+        document.getElementById("pauseOverlay")
+            .classList.add("show");
 
-        document.getElementById("pauseBtn").textContent="⏸ Pause";
+        document.getElementById("pauseBtn")
+            .textContent="⏸ Pause";
 
     }else if(gameState==="paused"){
 
         gameState="playing";
 
-        document.getElementById("pauseOverlay").classList.remove("show");
+        document.getElementById("pauseOverlay")
+            .classList.remove("show");
     }
 }
 
@@ -268,13 +531,11 @@ function beginNewGame(keepSelection){
 
     money=500;
     lives=difficultyData.startLives;
-
     wave=0;
 
     waveRunning=false;
     waveTimer=0;
     spawnTimer=0;
-
     autoplayTimer=0;
 
     towers=[];
@@ -282,11 +543,15 @@ function beginNewGame(keepSelection){
     projectiles=[];
     particles=[];
 
+    /* PLACEMENT FIX */
     selectedTowerType=null;
     selectedTower=null;
 
-    document.getElementById("menuOverlay").classList.add("hidden");
-    document.getElementById("pauseOverlay").classList.remove("show");
+    document.getElementById("menuOverlay")
+        .classList.add("hidden");
+
+    document.getElementById("pauseOverlay")
+        .classList.remove("show");
 
     hideSelectedInfo();
 
@@ -298,30 +563,6 @@ function beginNewGame(keepSelection){
     updateUI();
 
     gameState="playing";
-}
-
-/* =========================================================
-   PLACEMENT SELECTION
-========================================================= */
-
-/*
-    Cancels tower placement.
-
-    This is used when:
-    - Right-clicking anywhere
-    - Hovering over the GUI
-    - Clicking the tower panel
-    - Opening the menu
-    - Pausing the game
-*/
-function cancelTowerPlacement(){
-
-    selectedTowerType=null;
-
-    mouseX=-1000;
-    mouseY=-1000;
-
-    renderTowerList();
 }
 
 /* =========================================================
@@ -352,7 +593,6 @@ function pointOnPath(t){
 
         const ax=a.x*W;
         const ay=a.y*H;
-
         const bx=b.x*W;
         const by=b.y*H;
 
@@ -390,7 +630,6 @@ function distanceToPath(x,y){
 
         const ax=a.x*W;
         const ay=a.y*H;
-
         const bx=b.x*W;
         const by=b.y*H;
 
@@ -424,7 +663,6 @@ function inWater(x,y){
 
         const rx=r.x*W;
         const ry=r.y*H;
-
         const rw=r.w*W;
         const rh=r.h*H;
 
@@ -445,10 +683,6 @@ function inWater(x,y){
    TOWER DEFINITIONS
 ========================================================= */
 
-function stdTiers(baseCost,path){
-    return path;
-}
-
 const towerTypes = {
 
     scout:{
@@ -463,6 +697,7 @@ const towerTypes = {
         projectileSpeed:520,
         color:"#9fb5c4",
         desc:"Cheap, reliable single-target damage.",
+
         upgrades:{
             A:{
                 name:"Rapid Fire",
@@ -471,9 +706,7 @@ const towerTypes = {
                     {
                         cost:60,
                         desc:"+30% fire rate",
-                        apply:t=>{
-                            t.rateMult*=1.3
-                        }
+                        apply:t=>{t.rateMult*=1.3}
                     },
                     {
                         cost:150,
@@ -481,7 +714,7 @@ const towerTypes = {
                         special:"multishot2",
                         apply:t=>{
                             t.rateMult*=1.15;
-                            t.multishot=2
+                            t.multishot=2;
                         }
                     }
                 ]
@@ -494,9 +727,7 @@ const towerTypes = {
                     {
                         cost:60,
                         desc:"+35% damage",
-                        apply:t=>{
-                            t.dmgMult*=1.35
-                        }
+                        apply:t=>{t.dmgMult*=1.35}
                     },
                     {
                         cost:150,
@@ -504,7 +735,7 @@ const towerTypes = {
                         special:"breaksArmor",
                         apply:t=>{
                             t.dmgMult*=1.2;
-                            t.breaksArmor=true
+                            t.breaksArmor=true;
                         }
                     }
                 ]
@@ -524,6 +755,7 @@ const towerTypes = {
         projectileSpeed:800,
         color:"#b8c6d0",
         desc:"Very long range, heavy single-target shots.",
+
         upgrades:{
             A:{
                 name:"Precision Scope",
@@ -532,9 +764,7 @@ const towerTypes = {
                     {
                         cost:150,
                         desc:"+25% range",
-                        apply:t=>{
-                            t.rangeMult*=1.25
-                        }
+                        apply:t=>{t.rangeMult*=1.25}
                     },
                     {
                         cost:320,
@@ -542,7 +772,7 @@ const towerTypes = {
                         special:"crit",
                         apply:t=>{
                             t.critChance=.25;
-                            t.critMult=3
+                            t.critMult=3;
                         }
                     }
                 ]
@@ -556,17 +786,13 @@ const towerTypes = {
                         cost:150,
                         desc:"Reveals Camouflage enemies",
                         special:"detectCamo",
-                        apply:t=>{
-                            t.detectsCamo=true
-                        }
+                        apply:t=>{t.detectsCamo=true}
                     },
                     {
                         cost:320,
                         desc:"Ghost Killer: +80% damage to Camouflage",
                         special:"campKiller",
-                        apply:t=>{
-                            t.camoBonus=1.8
-                        }
+                        apply:t=>{t.camoBonus=1.8}
                     }
                 ]
             }
@@ -587,6 +813,7 @@ const towerTypes = {
         color:"#a7a7a7",
         breaksArmor:true,
         desc:"Explosive shots damage nearby enemies. Breaks armor.",
+
         upgrades:{
             A:{
                 name:"Big Shells",
@@ -595,17 +822,13 @@ const towerTypes = {
                     {
                         cost:180,
                         desc:"+40% splash radius",
-                        apply:t=>{
-                            t.splashMult*=1.4
-                        }
+                        apply:t=>{t.splashMult*=1.4}
                     },
                     {
                         cost:400,
                         desc:"Demolition: +70% damage",
                         special:"demolition",
-                        apply:t=>{
-                            t.dmgMult*=1.7
-                        }
+                        apply:t=>{t.dmgMult*=1.7}
                     }
                 ]
             },
@@ -617,17 +840,13 @@ const towerTypes = {
                     {
                         cost:180,
                         desc:"+30% fire rate",
-                        apply:t=>{
-                            t.rateMult*=1.3
-                        }
+                        apply:t=>{t.rateMult*=1.3}
                     },
                     {
                         cost:400,
                         desc:"Barrage: fires 3 shells per volley",
                         special:"barrage3",
-                        apply:t=>{
-                            t.multishot=3
-                        }
+                        apply:t=>{t.multishot=3}
                     }
                 ]
             }
@@ -646,6 +865,7 @@ const towerTypes = {
         projectileSpeed:1000,
         color:"#d7e1e8",
         desc:"Fast, powerful continuous-style attacks.",
+
         upgrades:{
             A:{
                 name:"Overcharge",
@@ -654,9 +874,7 @@ const towerTypes = {
                     {
                         cost:350,
                         desc:"+35% damage",
-                        apply:t=>{
-                            t.dmgMult*=1.35
-                        }
+                        apply:t=>{t.dmgMult*=1.35}
                     },
                     {
                         cost:750,
@@ -664,7 +882,7 @@ const towerTypes = {
                         special:"beam",
                         apply:t=>{
                             t.pierce=true;
-                            t.dmgMult*=1.2
+                            t.dmgMult*=1.2;
                         }
                     }
                 ]
@@ -677,9 +895,7 @@ const towerTypes = {
                     {
                         cost:350,
                         desc:"+35% fire rate",
-                        apply:t=>{
-                            t.rateMult*=1.35
-                        }
+                        apply:t=>{t.rateMult*=1.35}
                     },
                     {
                         cost:750,
@@ -687,7 +903,7 @@ const towerTypes = {
                         special:"pulse",
                         apply:t=>{
                             t.splash=60;
-                            t.splashMult=1
+                            t.splashMult=1;
                         }
                     }
                 ]
@@ -709,6 +925,7 @@ const towerTypes = {
         color:"#d99b6c",
         breaksArmor:true,
         desc:"Bomb tower. Breaks armor by default.",
+
         upgrades:{
             A:{
                 name:"Heavy Ordnance",
@@ -717,9 +934,7 @@ const towerTypes = {
                     {
                         cost:250,
                         desc:"+45% damage",
-                        apply:t=>{
-                            t.dmgMult*=1.45
-                        }
+                        apply:t=>{t.dmgMult*=1.45}
                     },
                     {
                         cost:520,
@@ -727,7 +942,7 @@ const towerTypes = {
                         special:"nuke",
                         apply:t=>{
                             t.splashMult*=1.6;
-                            t.bossBonus=2
+                            t.bossBonus=2;
                         }
                     }
                 ]
@@ -740,17 +955,13 @@ const towerTypes = {
                     {
                         cost:250,
                         desc:"+40% splash radius",
-                        apply:t=>{
-                            t.splashMult*=1.4
-                        }
+                        apply:t=>{t.splashMult*=1.4}
                     },
                     {
                         cost:520,
                         desc:"Cluster: scatters mini explosions on impact",
                         special:"cluster",
-                        apply:t=>{
-                            t.cluster=true
-                        }
+                        apply:t=>{t.cluster=true}
                     }
                 ]
             }
@@ -770,6 +981,7 @@ const towerTypes = {
         slow:.42,
         color:"#b7d5df",
         desc:"Damages enemies and slows them.",
+
         upgrades:{
             A:{
                 name:"Deep Freeze",
@@ -779,7 +991,7 @@ const towerTypes = {
                         cost:150,
                         desc:"+20% slow strength",
                         apply:t=>{
-                            t.slowBonus=(t.slowBonus||0)+.2
+                            t.slowBonus=(t.slowBonus||0)+.2;
                         }
                     },
                     {
@@ -788,7 +1000,7 @@ const towerTypes = {
                         special:"blizzard",
                         apply:t=>{
                             t.auraSlow=.25;
-                            t.auraRange=90
+                            t.auraRange=90;
                         }
                     }
                 ]
@@ -801,17 +1013,13 @@ const towerTypes = {
                     {
                         cost:150,
                         desc:"+30% damage",
-                        apply:t=>{
-                            t.dmgMult*=1.3
-                        }
+                        apply:t=>{t.dmgMult*=1.3}
                     },
                     {
                         cost:320,
                         desc:"Shatter: +100% damage to slowed enemies",
                         special:"shatter",
-                        apply:t=>{
-                            t.shatterBonus=2
-                        }
+                        apply:t=>{t.shatterBonus=2}
                     }
                 ]
             }
@@ -831,6 +1039,7 @@ const towerTypes = {
         buff:.16,
         color:"#c7c1a7",
         desc:"Buffs damage of nearby towers.",
+
         upgrades:{
             A:{
                 name:"Leadership",
@@ -840,16 +1049,14 @@ const towerTypes = {
                         cost:400,
                         desc:"+10% buff strength",
                         apply:t=>{
-                            t.buffBonus=(t.buffBonus||0)+.1
+                            t.buffBonus=(t.buffBonus||0)+.1;
                         }
                     },
                     {
                         cost:850,
                         desc:"War Horn: buff range +60%",
                         special:"warhorn",
-                        apply:t=>{
-                            t.buffRangeMult=1.6
-                        }
+                        apply:t=>{t.buffRangeMult=1.6}
                     }
                 ]
             },
@@ -861,17 +1068,13 @@ const towerTypes = {
                     {
                         cost:400,
                         desc:"+30% own damage",
-                        apply:t=>{
-                            t.dmgMult*=1.3
-                        }
+                        apply:t=>{t.dmgMult*=1.3}
                     },
                     {
                         cost:850,
                         desc:"Elite Guard: nearby towers gain 15% crit chance",
                         special:"eliteguard",
-                        apply:t=>{
-                            t.grantsCrit=.15
-                        }
+                        apply:t=>{t.grantsCrit=.15}
                     }
                 ]
             }
@@ -888,6 +1091,7 @@ const towerTypes = {
         incomeTime:7000,
         color:"#9fb58c",
         desc:"Generates money while a wave is active.",
+
         upgrades:{
             A:{
                 name:"Efficiency",
@@ -896,17 +1100,13 @@ const towerTypes = {
                     {
                         cost:90,
                         desc:"+40% income",
-                        apply:t=>{
-                            t.incomeMult*=1.4
-                        }
+                        apply:t=>{t.incomeMult*=1.4}
                     },
                     {
                         cost:200,
                         desc:"Bank: stores interest between waves",
                         special:"bank",
-                        apply:t=>{
-                            t.bank=true
-                        }
+                        apply:t=>{t.bank=true}
                     }
                 ]
             },
@@ -918,17 +1118,13 @@ const towerTypes = {
                     {
                         cost:90,
                         desc:"-25% income interval",
-                        apply:t=>{
-                            t.incomeTimeMult*=.75
-                        }
+                        apply:t=>{t.incomeTimeMult*=.75}
                     },
                     {
                         cost:200,
                         desc:"Trade Route: income scales with wave number",
                         special:"traderoute",
-                        apply:t=>{
-                            t.tradeRoute=true
-                        }
+                        apply:t=>{t.tradeRoute=true}
                     }
                 ]
             }
@@ -948,6 +1144,7 @@ const towerTypes = {
         chain:3,
         color:"#c3c9d2",
         desc:"Extremely powerful chained attack.",
+
         upgrades:{
             A:{
                 name:"Overload",
@@ -957,16 +1154,14 @@ const towerTypes = {
                         cost:550,
                         desc:"+2 chain targets",
                         apply:t=>{
-                            t.chainBonus=(t.chainBonus||0)+2
+                            t.chainBonus=(t.chainBonus||0)+2;
                         }
                     },
                     {
                         cost:1100,
                         desc:"Storm: chains to every enemy in range",
                         special:"storm",
-                        apply:t=>{
-                            t.stormChain=true
-                        }
+                        apply:t=>{t.stormChain=true}
                     }
                 ]
             },
@@ -978,17 +1173,13 @@ const towerTypes = {
                     {
                         cost:550,
                         desc:"+40% damage",
-                        apply:t=>{
-                            t.dmgMult*=1.4
-                        }
+                        apply:t=>{t.dmgMult*=1.4}
                     },
                     {
                         cost:1100,
                         desc:"EMP: briefly stuns bosses on hit",
                         special:"emp",
-                        apply:t=>{
-                            t.empStun=true
-                        }
+                        apply:t=>{t.empStun=true}
                     }
                 ]
             }
@@ -1009,6 +1200,7 @@ const towerTypes = {
         color:"#d2c8b1",
         breaksArmor:true,
         desc:"One of the strongest towers. Breaks armor.",
+
         upgrades:{
             A:{
                 name:"Meltdown",
@@ -1017,17 +1209,13 @@ const towerTypes = {
                     {
                         cost:900,
                         desc:"+40% splash radius",
-                        apply:t=>{
-                            t.splashMult*=1.4
-                        }
+                        apply:t=>{t.splashMult*=1.4}
                     },
                     {
                         cost:1700,
                         desc:"Core Breach: huge periodic shockwave nuke",
                         special:"corebreach",
-                        apply:t=>{
-                            t.coreBreach=true
-                        }
+                        apply:t=>{t.coreBreach=true}
                     }
                 ]
             },
@@ -1039,17 +1227,13 @@ const towerTypes = {
                     {
                         cost:900,
                         desc:"+30% fire rate",
-                        apply:t=>{
-                            t.rateMult*=1.3
-                        }
+                        apply:t=>{t.rateMult*=1.3}
                     },
                     {
                         cost:1700,
                         desc:"Twin Core: fires two projectiles per shot",
                         special:"twincore",
-                        apply:t=>{
-                            t.multishot=2
-                        }
+                        apply:t=>{t.multishot=2}
                     }
                 ]
             }
@@ -1070,6 +1254,7 @@ const towerTypes = {
         waterOnly:true,
         detectsCamo:true,
         desc:"Water-only. Always detects Camouflage enemies.",
+
         upgrades:{
             A:{
                 name:"Sonar",
@@ -1078,17 +1263,13 @@ const towerTypes = {
                     {
                         cost:200,
                         desc:"+30% range",
-                        apply:t=>{
-                            t.rangeMult*=1.3
-                        }
+                        apply:t=>{t.rangeMult*=1.3}
                     },
                     {
                         cost:420,
                         desc:"Deep Scan: periodically reveals all Camouflage",
                         special:"deepscan",
-                        apply:t=>{
-                            t.deepScan=true
-                        }
+                        apply:t=>{t.deepScan=true}
                     }
                 ]
             },
@@ -1100,17 +1281,13 @@ const towerTypes = {
                     {
                         cost:200,
                         desc:"+40% damage",
-                        apply:t=>{
-                            t.dmgMult*=1.4
-                        }
+                        apply:t=>{t.dmgMult*=1.4}
                     },
                     {
                         cost:420,
                         desc:"Piercing Harpoon: shots pierce the whole line",
                         special:"harpoonpierce",
-                        apply:t=>{
-                            t.pierce=true
-                        }
+                        apply:t=>{t.pierce=true}
                     }
                 ]
             }
@@ -1128,6 +1305,7 @@ const towerTypes = {
         color:"#8fc7a0",
         waterOnly:true,
         desc:"Water-only farm. Higher income than a Farm.",
+
         upgrades:{
             A:{
                 name:"Efficiency",
@@ -1136,17 +1314,13 @@ const towerTypes = {
                     {
                         cost:110,
                         desc:"+40% income",
-                        apply:t=>{
-                            t.incomeMult*=1.4
-                        }
+                        apply:t=>{t.incomeMult*=1.4}
                     },
                     {
                         cost:240,
                         desc:"Bank: stores interest between waves",
                         special:"bank",
-                        apply:t=>{
-                            t.bank=true
-                        }
+                        apply:t=>{t.bank=true}
                     }
                 ]
             },
@@ -1158,17 +1332,13 @@ const towerTypes = {
                     {
                         cost:110,
                         desc:"-25% income interval",
-                        apply:t=>{
-                            t.incomeTimeMult*=.75
-                        }
+                        apply:t=>{t.incomeTimeMult*=.75}
                     },
                     {
                         cost:240,
                         desc:"Trade Route: income scales with wave number",
                         special:"traderoute",
-                        apply:t=>{
-                            t.tradeRoute=true
-                        }
+                        apply:t=>{t.tradeRoute=true}
                     }
                 ]
             }
@@ -1181,24 +1351,28 @@ const towerTypes = {
 ========================================================= */
 
 const blessings = [
+
     {
         key:"crit",
         name:"Lucky Crit",
         desc:"+50% dmg on random shots",
         color:"#ffe066"
     },
+
     {
         key:"rapid",
         name:"Overclocked",
         desc:"+20% fire rate",
         color:"#7fd4ff"
     },
+
     {
         key:"eagle",
         name:"Eagle Eye",
         desc:"+25% range",
         color:"#c9ff8e"
     },
+
     {
         key:"greed",
         name:"Greedy",
@@ -1234,116 +1408,98 @@ function renderTowerList(){
     towerList.innerHTML="";
 
     Object.entries(towerTypes)
-    .filter(([key,t])=>
-        currentFilter==="all" ||
-        t.category===currentFilter
-    )
-    .forEach(([key,t])=>{
 
-        const count=getTowerCount(key);
+        .filter(([key,t])=>
+            currentFilter==="all" ||
+            t.category===currentFilter
+        )
 
-        const card=document.createElement("div");
+        .forEach(([key,t])=>{
 
-        card.className=
-            "towerCard"+
-            (selectedTowerType===key ? " selected":"")+
-            (count>=t.limit ? " disabled":"");
+            const count=getTowerCount(key);
 
-        card.innerHTML=`
-            <div class="towerTop">
-                <div class="towerIcon" style="color:${t.color}">
-                    ${t.icon}
+            const card=document.createElement("div");
+
+            card.className=
+                "towerCard"+
+                (selectedTowerType===key ? " selected":"")+
+                (count>=t.limit ? " disabled":"");
+
+            card.innerHTML=`
+                <div class="towerTop">
+                    <div class="towerIcon" style="color:${t.color}">
+                        ${t.icon}
+                    </div>
+
+                    <div class="towerName">
+                        ${t.name}
+                    </div>
+
+                    <div class="limit">
+                        ${count}/${t.limit}
+                    </div>
                 </div>
 
-                <div class="towerName">
-                    ${t.name}
+                <div class="towerDesc">
+                    ${t.desc}
                 </div>
 
-                <div class="limit">
-                    ${count}/${t.limit}
+                <div class="towerCost">
+                    Cost: $${t.cost}
                 </div>
-            </div>
+            `;
 
-            <div class="towerDesc">
-                ${t.desc}
-            </div>
+            card.addEventListener("click",()=>{
 
-            <div class="towerCost">
-                Cost: $${t.cost}
-            </div>
-        `;
+                if(gameState!=="playing") return;
 
-        card.addEventListener("mouseenter",()=>{
-            /*
-                Moving onto the GUI cancels placement.
-                This prevents the selected tower from staying
-                active while interacting with the tower panel.
-            */
-            if(selectedTowerType){
-                cancelTowerPlacement();
-            }
-        });
+                if(count>=t.limit){
 
-        card.addEventListener("click",()=>{
+                    setMessage(
+                        `${t.name} placement limit reached (${t.limit}).`
+                    );
 
-            if(gameState!=="playing") return;
+                    return;
+                }
 
-            /*
-                Clicking a tower card first cancels any old
-                placement selection, then selects this tower.
-            */
-            selectedTowerType=null;
-            selectedTower=null;
-            hideSelectedInfo();
+                if(money<t.cost){
 
-            if(count>=t.limit){
+                    setMessage(
+                        `Not enough money for ${t.name}.`
+                    );
 
-                setMessage(
-                    `${t.name} placement limit reached (${t.limit}).`
-                );
+                    return;
+                }
+
+                /*
+                 * PLACEMENT FIX:
+                 *
+                 * Selecting a tower from the GUI always replaces
+                 * the previous placement selection.
+                 */
+                selectedTowerType=key;
+
+                selectedTower=null;
+
+                hideSelectedInfo();
 
                 renderTowerList();
-                return;
-            }
-
-            if(money<t.cost){
 
                 setMessage(
-                    `Not enough money for ${t.name}.`
+                    `Selected ${t.name}. Click a valid location.`
                 );
+            });
 
-                renderTowerList();
-                return;
-            }
-
-            selectedTowerType=key;
-
-            setMessage(
-                `Selected ${t.name}. Click a valid location.`
-            );
-
-            renderTowerList();
+            towerList.appendChild(card);
         });
-
-        towerList.appendChild(card);
-    });
 }
 
 document.querySelectorAll(".filterBtn").forEach(btn=>{
 
-    btn.addEventListener("mouseenter",()=>{
-        if(selectedTowerType){
-            cancelTowerPlacement();
-        }
-    });
-
     btn.addEventListener("click",()=>{
 
-        cancelTowerPlacement();
-
-        document.querySelectorAll(".filterBtn").forEach(b=>{
-            b.classList.remove("active");
-        });
+        document.querySelectorAll(".filterBtn")
+            .forEach(b=>b.classList.remove("active"));
 
         btn.classList.add("active");
 
@@ -1351,6 +1507,25 @@ document.querySelectorAll(".filterBtn").forEach(btn=>{
 
         renderTowerList();
     });
+});
+
+/* =========================================================
+   PLACEMENT FIX:
+   Moving onto the tower GUI cancels placement mode.
+========================================================= */
+
+const towerPanel=document.getElementById("towerPanel");
+
+towerPanel.addEventListener("mouseenter",()=>{
+
+    if(selectedTowerType){
+
+        selectedTowerType=null;
+
+        renderTowerList();
+
+        setMessage("Tower placement cancelled.");
+    }
 });
 
 /* =========================================================
@@ -1496,9 +1671,11 @@ function canPlace(x,y,type){
 
     const t=towerTypes[type];
 
-    if(getTowerCount(type)>=t.limit) return false;
+    if(getTowerCount(type)>=t.limit)
+        return false;
 
-    if(money<t.cost) return false;
+    if(money<t.cost)
+        return false;
 
     for(const tower of towers){
 
@@ -1512,15 +1689,18 @@ function canPlace(x,y,type){
         }
     }
 
-    if(distanceToPath(x,y)<27) return false;
+    if(distanceToPath(x,y)<27)
+        return false;
 
     if(t.waterOnly){
 
-        if(!inWater(x,y)) return false;
+        if(!inWater(x,y))
+            return false;
 
     }else{
 
-        if(inWater(x,y)) return false;
+        if(inWater(x,y))
+            return false;
     }
 
     return true;
@@ -1528,7 +1708,8 @@ function canPlace(x,y,type){
 
 function placeTower(x,y){
 
-    if(!selectedTowerType) return;
+    if(!selectedTowerType)
+        return;
 
     const type=selectedTowerType;
 
@@ -1641,16 +1822,20 @@ function placeTower(x,y){
         )
     );
 
-    /*
-        IMPORTANT:
-        The tower is no longer being placed after this click.
-        This makes it possible to immediately choose another
-        tower from the GUI.
-    */
-    selectedTowerType=null;
-
     renderTowerList();
     updateUI();
+
+    /*
+     * PLACEMENT FIX:
+     *
+     * We intentionally DO NOT clear selectedTowerType here.
+     *
+     * This allows the player to place multiple copies
+     * of the same tower without having to select it again.
+     *
+     * Right-click, GUI hover, Escape, or selecting another
+     * tower will cancel/switch placement.
+     */
 }
 
 /* =========================================================
@@ -1670,7 +1855,8 @@ function upgradeTower(tower,pathKey){
 
     const level=tower[levelProp];
 
-    if(level>=path.tiers.length) return;
+    if(level>=path.tiers.length)
+        return;
 
     const tier=path.tiers[level];
 
@@ -1709,16 +1895,18 @@ function getBuffMultiplier(tower){
 
     for(const other of towers){
 
-        if(other.type!=="commander") continue;
+        if(other.type!=="commander")
+            continue;
 
         const range=
             towerTypes.commander.range*
             (other.buffRangeMult||1);
 
-        const d=Math.hypot(
-            tower.x-other.x,
-            tower.y-other.y
-        );
+        const d=
+            Math.hypot(
+                tower.x-other.x,
+                tower.y-other.y
+            );
 
         if(d<=range){
 
@@ -1755,16 +1943,23 @@ function getTarget(tower){
 
     for(const e of enemies){
 
-        if(!e.alive) continue;
+        if(!e.alive)
+            continue;
 
-        if(e.camo && !tower.detectsCamo) continue;
+        if(
+            e.camo &&
+            !tower.detectsCamo
+        ){
+            continue;
+        }
 
         const p=pointOnPath(e.progress);
 
-        const d=Math.hypot(
-            p.x-tower.x,
-            p.y-tower.y
-        );
+        const d=
+            Math.hypot(
+                p.x-tower.x,
+                p.y-tower.y
+            );
 
         if(
             d<=range &&
@@ -1787,7 +1982,8 @@ function fireTower(tower,target){
 
     const data=towerTypes[tower.type];
 
-    if(!data.damage) return;
+    if(!data.damage)
+        return;
 
     const {
         multiplier,
@@ -1802,14 +1998,14 @@ function fireTower(tower,target){
     const totalCrit=
         Math.min(
             .95,
-            tower.critChance+
-            critBonus
+            tower.critChance+critBonus
         );
 
     if(
         totalCrit>0 &&
         Math.random()<totalCrit
     ){
+
         dmg*=tower.critMult||2;
     }
 
@@ -1817,6 +2013,7 @@ function fireTower(tower,target){
         target.camo &&
         tower.camoBonus>1
     ){
+
         dmg*=tower.camoBonus;
     }
 
@@ -1824,6 +2021,7 @@ function fireTower(tower,target){
         target.boss &&
         tower.bossBonus>1
     ){
+
         dmg*=tower.bossBonus;
     }
 
@@ -1832,6 +2030,7 @@ function fireTower(tower,target){
         tower.blessing.key==="crit" &&
         Math.random()<.25
     ){
+
         dmg*=1.5;
     }
 
@@ -1843,23 +2042,23 @@ function fireTower(tower,target){
 
         targets=[target];
 
-        const alive=enemies.filter(e=>
-            e.alive &&
-            (!e.camo||tower.detectsCamo)
-        );
+        const alive=
+            enemies.filter(e=>
+                e.alive &&
+                (!e.camo || tower.detectsCamo)
+            );
 
         alive.sort(
-            (a,b)=>
-                b.progress-a.progress
+            (a,b)=>b.progress-a.progress
         );
 
         for(const e of alive){
 
-            if(targets.length>=shots) break;
+            if(targets.length>=shots)
+                break;
 
-            if(!targets.includes(e)){
+            if(!targets.includes(e))
                 targets.push(e);
-            }
         }
     }
 
@@ -1912,12 +2111,14 @@ function damageEnemy(
     shatterBonus
 ){
 
-    if(!enemy || !enemy.alive) return;
+    if(!enemy || !enemy.alive)
+        return;
 
     if(
         enemy.armored &&
         !breaksArmor
     ){
+
         amount*=.25;
     }
 
@@ -1926,6 +2127,7 @@ function damageEnemy(
         shatterBonus>1 &&
         enemy.slow<1
     ){
+
         amount*=shatterBonus;
     }
 
@@ -1937,10 +2139,9 @@ function damageEnemy(
 
         let reward=enemy.reward;
 
-        const p=
-            pointOnPath(
-                enemy.progress
-            );
+        const p=pointOnPath(
+            enemy.progress
+        );
 
         createParticles(
             p.x,
@@ -1968,19 +2169,18 @@ function chainAttack(
 
         const range=towerTypes.arc.range;
 
-        const cp=
-            pointOnPath(
-                startEnemy.progress
-            );
+        const cp=pointOnPath(
+            startEnemy.progress
+        );
 
         for(const e of enemies){
 
-            if(!e.alive) continue;
+            if(!e.alive)
+                continue;
 
-            const ep=
-                pointOnPath(
-                    e.progress
-                );
+            const ep=pointOnPath(
+                e.progress
+            );
 
             if(
                 Math.hypot(
@@ -1988,6 +2188,7 @@ function chainAttack(
                     cp.y-ep.y
                 )<=range
             ){
+
                 damageEnemy(
                     e,
                     damage,
@@ -2005,7 +2206,8 @@ function chainAttack(
         i++
     ){
 
-        if(hit.has(current)) break;
+        if(hit.has(current))
+            break;
 
         hit.add(current);
 
@@ -2018,20 +2220,22 @@ function chainAttack(
         let next=null;
         let best=Infinity;
 
-        const cp=
-            pointOnPath(
-                current.progress
-            );
+        const cp=pointOnPath(
+            current.progress
+        );
 
         for(const e of enemies){
 
-            if(!e.alive || hit.has(e))
+            if(
+                !e.alive ||
+                hit.has(e)
+            ){
                 continue;
+            }
 
-            const ep=
-                pointOnPath(
-                    e.progress
-                );
+            const ep=pointOnPath(
+                e.progress
+            );
 
             const d=
                 Math.hypot(
@@ -2039,7 +2243,10 @@ function chainAttack(
                     cp.y-ep.y
                 );
 
-            if(d<90 && d<best){
+            if(
+                d<90 &&
+                d<best
+            ){
 
                 best=d;
                 next=e;
@@ -2064,20 +2271,19 @@ function updateProjectiles(dt){
             !p.target ||
             !p.target.alive
         ){
+
             p.dead=true;
             continue;
         }
 
-        const ep=
-            pointOnPath(
-                p.target.progress
-            );
+        const ep=pointOnPath(
+            p.target.progress
+        );
 
         const dx=ep.x-p.x;
         const dy=ep.y-p.y;
 
-        const dist=
-            Math.hypot(dx,dy);
+        const dist=Math.hypot(dx,dy);
 
         const step=
             p.speed*
@@ -2113,9 +2319,8 @@ function updateProjectiles(dt){
                     p.target.speed*=.4;
 
                     setTimeout(()=>{
-                        if(p.target){
+                        if(p.target)
                             p.target.speed/=.4;
-                        }
                     },1200);
                 }
 
@@ -2126,12 +2331,13 @@ function updateProjectiles(dt){
                         if(
                             !e.alive ||
                             e===p.target
-                        ) continue;
+                        ){
+                            continue;
+                        }
 
-                        const q=
-                            pointOnPath(
-                                e.progress
-                            );
+                        const q=pointOnPath(
+                            e.progress
+                        );
 
                         if(
                             Math.hypot(
@@ -2171,12 +2377,12 @@ function updateProjectiles(dt){
 
                         for(const e of enemies){
 
-                            if(!e.alive) continue;
+                            if(!e.alive)
+                                continue;
 
-                            const q=
-                                pointOnPath(
-                                    e.progress
-                                );
+                            const q=pointOnPath(
+                                e.progress
+                            );
 
                             if(
                                 Math.hypot(
@@ -2214,12 +2420,13 @@ function updateProjectiles(dt){
                         if(
                             !e.alive ||
                             e===p.target
-                        ) continue;
+                        ){
+                            continue;
+                        }
 
-                        const q=
-                            pointOnPath(
-                                e.progress
-                            );
+                        const q=pointOnPath(
+                            e.progress
+                        );
 
                         if(
                             Math.abs(q.x-ep.x)<40 &&
@@ -2246,13 +2453,8 @@ function updateProjectiles(dt){
 
         }else{
 
-            p.x+=
-                dx/dist*
-                step;
-
-            p.y+=
-                dy/dist*
-                step;
+            p.x+=dx/dist*step;
+            p.y+=dy/dist*step;
         }
     }
 
@@ -2299,6 +2501,7 @@ function pickEnemyType(
         waveNum%10===0 &&
         isLast
     ){
+
         return "boss";
     }
 
@@ -2350,9 +2553,7 @@ function pickEnemyType(
 
 function spawnForWave(){
 
-    const count=
-        8+
-        wave*2;
+    const count=8+wave*2;
 
     if(waveTimer>=count){
 
@@ -2531,6 +2732,10 @@ function update(dt){
 
                 waveRunning=false;
 
+                /* PLACEMENT FIX */
+                selectedTowerType=null;
+                renderTowerList();
+
                 setMessage(
                     "Defeat. Restart or return to menu."
                 );
@@ -2543,15 +2748,15 @@ function update(dt){
                 Math.min(
                     1,
                     e.slow+
-                    dt/1000*.05
+                    dt/1000*
+                    .05
                 );
         }
     }
 
     for(const e of enemies){
 
-        const t=
-            enemyTypes[e.type];
+        const t=enemyTypes[e.type];
 
         e.camo=t.camo;
         e.armored=t.armored;
@@ -2593,7 +2798,8 @@ function update(dt){
 
                     amt*=
                         1+
-                        wave*.05;
+                        wave*
+                        .05;
                 }
 
                 if(tower.bank){
@@ -2636,18 +2842,16 @@ function update(dt){
                     if(!e.alive)
                         continue;
 
-                    const q=
-                        pointOnPath(
-                            e.progress
-                        );
+                    const q=pointOnPath(
+                        e.progress
+                    );
 
                     if(
                         Math.hypot(
                             q.x-tower.x,
                             q.y-tower.y
                         )<=
-                        towerTypes.reactor.range*
-                        1.4
+                        towerTypes.reactor.range*1.4
                     ){
 
                         damageEnemy(
@@ -2679,10 +2883,9 @@ function update(dt){
                     continue;
                 }
 
-                const q=
-                    pointOnPath(
-                        e.progress
-                    );
+                const q=pointOnPath(
+                    e.progress
+                );
 
                 if(
                     Math.hypot(
@@ -2723,9 +2926,7 @@ function update(dt){
     }
 
     updateProjectiles(dt);
-
     updateParticles(dt);
-
     updateUI();
 }
 
@@ -2756,22 +2957,44 @@ function draw(){
 
     ctx.lineWidth=1;
 
-    for(let x=0;x<W;x+=40){
+    for(
+        let x=0;
+        x<W;
+        x+=40
+    ){
 
         ctx.beginPath();
 
-        ctx.moveTo(x,0);
-        ctx.lineTo(x,H);
+        ctx.moveTo(
+            x,
+            0
+        );
+
+        ctx.lineTo(
+            x,
+            H
+        );
 
         ctx.stroke();
     }
 
-    for(let y=0;y<H;y+=40){
+    for(
+        let y=0;
+        y<H;
+        y+=40
+    ){
 
         ctx.beginPath();
 
-        ctx.moveTo(0,y);
-        ctx.lineTo(W,y);
+        ctx.moveTo(
+            0,
+            y
+        );
+
+        ctx.lineTo(
+            W,
+            y
+        );
 
         ctx.stroke();
     }
@@ -2796,7 +3019,6 @@ function drawWater(){
 
         const x=r.x*W;
         const y=r.y*H;
-
         const w=r.w*W;
         const h=r.h*H;
 
@@ -2862,17 +3084,13 @@ function drawPath(){
     }
 
     ctx.strokeStyle="#000";
-
     ctx.lineWidth=3;
-
     ctx.lineCap="round";
     ctx.lineJoin="round";
 
     ctx.stroke();
 
-    const start=
-        currentPath[0];
-
+    const start=currentPath[0];
     const end=
         currentPath[
             currentPath.length-1
@@ -2932,10 +3150,7 @@ function drawTowers(){
 
             ctx.stroke();
 
-            ctx.setLineDash([
-                4,
-                4
-            ]);
+            ctx.setLineDash([4,4]);
 
             ctx.strokeStyle=
                 "rgba(255,180,120,.55)";
@@ -3148,7 +3363,10 @@ function drawParticles(){
     for(const p of particles){
 
         ctx.globalAlpha=
-            Math.max(0,p.life);
+            Math.max(
+                0,
+                p.life
+            );
 
         ctx.fillStyle="#555";
 
@@ -3223,10 +3441,7 @@ function drawPlacementPreview(){
 
     ctx.stroke();
 
-    ctx.setLineDash([
-        4,
-        4
-    ]);
+    ctx.setLineDash([4,4]);
 
     ctx.strokeStyle=
         "rgba(255,180,120,.5)";
@@ -3266,9 +3481,6 @@ canvas.addEventListener("mousemove",e=>{
         rect.top;
 });
 
-/*
-    Clicking the canvas.
-*/
 canvas.addEventListener("click",e=>{
 
     if(gameState!=="playing")
@@ -3286,9 +3498,11 @@ canvas.addEventListener("click",e=>{
         rect.top;
 
     /*
-        If a placed tower was clicked,
-        select that tower.
-    */
+     * PLACEMENT FIX:
+     *
+     * If the player is currently placing a tower,
+     * clicking a placed tower selects it instead.
+     */
     for(
         let i=towers.length-1;
         i>=0;
@@ -3304,11 +3518,15 @@ canvas.addEventListener("click",e=>{
             )<=18
         ){
 
-            selectedTower=tower;
+            selectedTower=
+                tower;
 
-            selectedTowerType=null;
+            selectedTowerType=
+                null;
 
-            showSelectedInfo(tower);
+            showSelectedInfo(
+                tower
+            );
 
             renderTowerList();
 
@@ -3316,10 +3534,6 @@ canvas.addEventListener("click",e=>{
         }
     }
 
-    /*
-        If we are currently placing a tower,
-        place it.
-    */
     if(selectedTowerType){
 
         placeTower(
@@ -3330,21 +3544,15 @@ canvas.addEventListener("click",e=>{
         return;
     }
 
-    /*
-        Clicking empty canvas deselects
-        the currently selected placed tower.
-    */
     selectedTower=null;
 
     hideSelectedInfo();
 });
 
-/*
-    RIGHT CLICK NO LONGER SELLS TOWERS.
+/* =========================================================
+   RIGHT CLICK
+========================================================= */
 
-    Instead, right-click simply cancels
-    tower placement / selection.
-*/
 canvas.addEventListener("contextmenu",e=>{
 
     e.preventDefault();
@@ -3352,33 +3560,101 @@ canvas.addEventListener("contextmenu",e=>{
     if(gameState!=="playing")
         return;
 
-    cancelTowerPlacement();
-
-    selectedTower=null;
-
-    hideSelectedInfo();
-
-    setMessage(
-        "Tower placement cancelled."
-    );
-});
-
-/*
-    When the mouse enters the GUI/tower panel,
-    cancel placement.
-
-    This means:
-      1. Select Scout.
-      2. Move onto GUI.
-      3. Placement mode disappears.
-      4. Select another tower normally.
-*/
-document.getElementById("towerPanel")
-.addEventListener("mouseenter",()=>{
-
+    /*
+     * PLACEMENT FIX:
+     *
+     * Right-click while choosing a tower cancels
+     * placement instead of requiring a left click
+     * somewhere on the canvas.
+     */
     if(selectedTowerType){
 
-        cancelTowerPlacement();
+        selectedTowerType=null;
+
+        renderTowerList();
+
+        setMessage(
+            "Tower placement cancelled."
+        );
+
+        return;
+    }
+
+    const rect=
+        canvas.getBoundingClientRect();
+
+    const x=
+        e.clientX-
+        rect.left;
+
+    const y=
+        e.clientY-
+        rect.top;
+
+    for(
+        let i=towers.length-1;
+        i>=0;
+        i--
+    ){
+
+        const tower=towers[i];
+
+        if(
+            Math.hypot(
+                x-tower.x,
+                y-tower.y
+            )<=20
+        ){
+
+            const data=
+                towerTypes[tower.type];
+
+            money+=
+                Math.floor(
+                    data.cost*.7
+                );
+
+            towers.splice(
+                i,
+                1
+            );
+
+            selectedTower=null;
+
+            hideSelectedInfo();
+
+            setMessage(
+                `${data.name} sold.`
+            );
+
+            renderTowerList();
+            updateUI();
+
+            return;
+        }
+    }
+});
+
+/* =========================================================
+   ESCAPE KEY
+========================================================= */
+
+document.addEventListener("keydown",e=>{
+
+    /*
+     * PLACEMENT FIX:
+     *
+     * Escape provides a conventional way to cancel
+     * tower placement.
+     */
+    if(
+        e.key==="Escape" &&
+        selectedTowerType
+    ){
+
+        selectedTowerType=null;
+
+        renderTowerList();
 
         setMessage(
             "Tower placement cancelled."
@@ -3386,71 +3662,51 @@ document.getElementById("towerPanel")
     }
 });
 
-/*
-    The top bar is also GUI, so moving onto it
-    cancels placement.
-*/
-document.getElementById("topbar")
-.addEventListener("mouseenter",()=>{
-
-    if(selectedTowerType){
-
-        cancelTowerPlacement();
-
-        setMessage(
-            "Tower placement cancelled."
-        );
-    }
-});
-
-/*
-    Moving onto the selected-info/upgrade box
-    cancels placement as well.
-*/
-document.getElementById("selectedInfo")
-.addEventListener("mouseenter",()=>{
-
-    if(selectedTowerType){
-
-        cancelTowerPlacement();
-
-        setMessage(
-            "Tower placement cancelled."
-        );
-    }
-});
+/* =========================================================
+   START WAVE
+========================================================= */
 
 document.getElementById("startWave")
-.addEventListener(
-    "click",
-    startWave
-);
+    .addEventListener(
+        "click",
+        startWave
+    );
+
+/* =========================================================
+   SPEED
+========================================================= */
 
 document.getElementById("speedSlider")
-.addEventListener("input",e=>{
+    .addEventListener("input",e=>{
 
-    gameSpeed=
-        Number(e.target.value);
+        gameSpeed=
+            Number(
+                e.target.value
+            );
 
-    document.getElementById(
-        "speedLabel"
-    ).textContent=
-        gameSpeed+"x";
-});
+        document.getElementById(
+            "speedLabel"
+        ).textContent=
+            gameSpeed+"x";
+    });
+
+/* =========================================================
+   AUTOPLAY
+========================================================= */
 
 document.getElementById("autoToggle")
-.addEventListener("change",e=>{
+    .addEventListener("change",e=>{
 
-    autoplay=e.target.checked;
+        autoplay=e.target.checked;
 
-    autoplayTimer=1200;
+        autoplayTimer=1200;
 
-    setMessage(
-        autoplay
-        ? "Autoplay enabled."
-        : "Autoplay disabled."
-    );
-});
+        setMessage(
+            autoplay
+            ? "Autoplay enabled."
+            : "Autoplay disabled."
+        );
+    });
 
 /* =========================================================
    SELECTED INFO / UPGRADE PANEL
@@ -3469,33 +3725,55 @@ function showSelectedInfo(tower){
     box.style.display="block";
 
     let html=
-        `<b style="color:${data.color}">${data.name}</b>`;
+        `<b style="color:${data.color}">
+            ${data.name}
+        </b>`;
 
     html+=
-        `<div class="row">Placed: ${getTowerCount(tower.type)}/${data.limit}</div>`;
+        `<div class="row">
+            Placed: ${getTowerCount(tower.type)}/${data.limit}
+        </div>`;
 
     if(data.damage){
 
         html+=
-            `<div class="row">Damage: ${Math.round(data.damage*tower.dmgMult)}</div>`;
+            `<div class="row">
+                Damage: ${Math.round(
+                    data.damage*
+                    tower.dmgMult
+                )}
+            </div>`;
     }
 
     if(data.range){
 
         html+=
-            `<div class="row">Range: ${Math.round(data.range*tower.rangeMult)}</div>`;
+            `<div class="row">
+                Range: ${Math.round(
+                    data.range*
+                    tower.rangeMult
+                )}
+            </div>`;
     }
 
     if(data.income){
 
         html+=
-            `<div class="row">Income: $${Math.round(data.income*tower.incomeMult)} / active-wave tick</div>`;
+            `<div class="row">
+                Income: $${Math.round(
+                    data.income*
+                    tower.incomeMult
+                )} / active-wave tick
+            </div>`;
     }
 
     if(tower.blessing){
 
         html+=
-            `<div class="blessTag">✦ ${tower.blessing.name}: ${tower.blessing.desc}</div>`;
+            `<div class="blessTag">
+                ✦ ${tower.blessing.name}:
+                ${tower.blessing.desc}
+            </div>`;
     }
 
     ["A","B"].forEach(pathKey=>{
@@ -3511,64 +3789,66 @@ function showSelectedInfo(tower){
         const level=
             tower[levelProp];
 
-        html+=`
-            <div class="pathBox">
+        html+=
+            `<div class="pathBox">
                 <h4 style="color:${path.color}">
-                    ${path.name} (${level}/${path.tiers.length})
-                </h4>
-        `;
+                    ${path.name}
+                    (${level}/${path.tiers.length})
+                </h4>`;
 
         if(level<path.tiers.length){
 
             const tier=
                 path.tiers[level];
 
-            html+=`
-                <div class="pathTier">
+            html+=
+                `<div class="pathTier">
                     ${tier.desc}
-                </div>
+                </div>`;
 
-                <button
+            html+=
+                `<button
                     class="upgBtn"
                     data-tower="${tower.id}"
                     data-path="${pathKey}"
-                    ${money<tier.cost?"disabled":""}
-                >
+                    ${money<tier.cost?"disabled":""}>
                     Upgrade — $${tier.cost}
-                </button>
-            `;
+                </button>`;
 
         }else{
 
-            html+=`
-                <div class="pathTier">
+            html+=
+                `<div class="pathTier">
                     Maxed out.
-                </div>
-            `;
+                </div>`;
         }
 
         html+="</div>";
     });
 
-    html+=`
-        <button class="sellBtn" id="sellSelectedBtn">
+    html+=
+        `<button
+            class="sellBtn"
+            id="sellSelectedBtn">
             Sell for $${Math.floor(data.cost*.7)}
-        </button>
-    `;
+        </button>`;
 
     box.innerHTML=html;
 
     box.querySelectorAll(".upgBtn")
-    .forEach(btn=>{
+        .forEach(btn=>{
 
-        btn.addEventListener("click",()=>{
+            btn.addEventListener(
+                "click",
+                ()=>{
 
-            upgradeTower(
-                tower,
-                btn.dataset.path
+                    upgradeTower(
+                        tower,
+                        btn.dataset.path
+                    );
+                }
             );
         });
-    });
 
     const sellBtn=
         document.getElementById(
@@ -3582,7 +3862,9 @@ function showSelectedInfo(tower){
             ()=>{
 
                 const idx=
-                    towers.indexOf(tower);
+                    towers.indexOf(
+                        tower
+                    );
 
                 if(idx>=0){
 
@@ -3605,7 +3887,6 @@ function showSelectedInfo(tower){
                     );
 
                     renderTowerList();
-
                     updateUI();
                 }
             }
@@ -3693,16 +3974,21 @@ function loop(now){
         );
 
     update(dt);
-
     draw();
 
-    requestAnimationFrame(loop);
+    requestAnimationFrame(
+        loop
+    );
 }
 
 renderTowerList();
-
 updateUI();
 
-requestAnimationFrame(loop);
+requestAnimationFrame(
+    loop
+);
 
 </script>
+
+</body>
+</html>
